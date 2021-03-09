@@ -3,6 +3,7 @@ package gitreefs
 import (
 	"fmt"
 	"github.com/urfave/cli"
+	"gitreefs/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -76,7 +77,7 @@ func ParseOptions(c *cli.Context, err error) (opts *options) {
 		return
 	}
 
-	err = validateDirectory(clonesPath)
+	err = fs.ValidateDirectory(clonesPath)
 	if err != nil {
 		return
 	}
@@ -97,17 +98,3 @@ func ParseOptions(c *cli.Context, err error) (opts *options) {
 	return
 }
 
-
-func validateDirectory(dirPath string) error {
-	info, err := os.Stat(dirPath)
-	if os.IsNotExist(err) {
-		return fmt.Errorf("directory does not exist at %v", dirPath)
-	}
-	if err != nil {
-		return fmt.Errorf("directory error at %v: %w", dirPath, err)
-	}
-	if !info.IsDir() {
-		return fmt.Errorf("directory is actually a file at %v", dirPath)
-	}
-	return nil
-}

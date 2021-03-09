@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -41,39 +42,80 @@ func (gitSuite *gitTestSuite) SetupTest() {
 		return
 	}
 	gitSuite.clonePath = clonePath
-	gitSuite.provider, err = NewRepository(clonePath)
+	gitSuite.provider, err = NewRepositoryProvider(clonePath)
 }
 
 func (gitSuite *gitTestSuite) TearDownTest() {
 	os.RemoveAll(gitSuite.clonePath)
 }
 
+func countTreeNodes(node *Entry) uint {
+	var count uint = 1
+	if node.IsDir {
+		for _, child := range node.EntriesByName {
+			count += countTreeNodes(child)
+		}
+	}
+	return count
+}
+
+func lookupNode(node *Entry, path string) *Entry {
+	return lookupNodeRecursive(node, strings.Split(path, "/"))
+}
+
+func lookupNodeRecursive(node *Entry, pathParts []string) (target *Entry) {
+	if len(pathParts) == 0 {
+		return node
+	}
+	if !node.IsDir {
+		return nil
+	}
+	currentPart := pathParts[0]
+	child, found := node.EntriesByName[currentPart]
+	if !found {
+		return nil
+	}
+	remainderParts := pathParts[1:]
+	return lookupNodeRecursive(child, remainderParts)
+}
+
 func (gitSuite *gitTestSuite) TestListTreeForRegularCommit() {
 	tree, err := gitSuite.provider.ListTree("2ca742044ba451d00c6854a465fdd4280d9ad1f5")
 	gitSuite.Nil(err, "git.ListTree: %w", err)
-	gitSuite.EqualValues(209, len(tree), "tree size not as expected")
-	gitSuite.Contains(tree, "", "no root entry")
-
-	gitSuite.Contains(tree, "src", "no src dir")
-	dirEntry := tree["src"]
+	gitSuite.EqualValues(209, len(tree.EntriesByPath), "tree size not as expected")
+	gitSuite.EqualValues(209, countTreeNodes(&tree.Entry), "tree size not as expected")
+	gitSuite.Contains(tree.EntriesByPath, "", "no root entry")
+	dirEntry := tree.EntriesByPath[""]
+	gitSuite.NotNil(dirEntry)
 	gitSuite.True(dirEntry.IsDir)
 	gitSuite.EqualValues(0, dirEntry.Size)
-	gitSuite.Equal("src", dirEntry.Name)
-	gitSuite.Equal("", dirEntry.ParentPath)
+	gitSuite.Equal(4, len(dirEntry.EntriesByName))
 
-	gitSuite.Contains(tree, "src/main/java/com/dchealth/service/common", "no common dir")
-	dirEntry = tree["src/main/java/com/dchealth/service/common"]
+	gitSuite.Contains(tree.EntriesByPath, "src", "no src dir")
+	dirEntry = lookupNode(&tree.Entry, "src")
+	gitSuite.NotNil(dirEntry)
 	gitSuite.True(dirEntry.IsDir)
 	gitSuite.EqualValues(0, dirEntry.Size)
-	gitSuite.Equal("common", dirEntry.Name)
-	gitSuite.Equal("src/main/java/com/dchealth/service", dirEntry.ParentPath)
+	gitSuite.Equal(1, len(dirEntry.EntriesByName))
 
-	gitSuite.Contains(tree, "src/main/java/com/dchealth/service/common/YunUserService.java", "no java file")
-	fileEntry := tree["src/main/java/com/dchealth/service/common/YunUserService.java"]
+	gitSuite.Contains(tree.EntriesByPath, "src/main/java/com/dchealth/service/common", "no common dir")
+	dirEntry = lookupNode(&tree.Entry, "src/main/java/com/dchealth/service/common")
+	gitSuite.NotNil(dirEntry)
+	gitSuite.True(dirEntry.IsDir)
+	gitSuite.EqualValues(0, dirEntry.Size)
+	gitSuite.Equal(7, len(dirEntry.EntriesByName))
+
+	gitSuite.Contains(tree.EntriesByPath, "src/main/java/com/dchealth/service/common/YunUserService.java", "no java file")
+	fileEntry := lookupNode(&tree.Entry, "src/main/java/com/dchealth/service/common/YunUserService.java")
+	gitSuite.NotNil(dirEntry)
 	gitSuite.False(fileEntry.IsDir)
 	gitSuite.EqualValues(28092, fileEntry.Size)
-	gitSuite.Equal("YunUserService.java", fileEntry.Name)
-	gitSuite.Equal("src/main/java/com/dchealth/service/common", fileEntry.ParentPath)
+	gitSuite.Nil(fileEntry.EntriesByName)
+
+	gitSuite.NotContains(tree.EntriesByPath, "foo", "found fake dir")
+	gitSuite.NotContains(tree.EntriesByPath, "foo/bar", "found fake dir")
+	gitSuite.Nil(lookupNode(&tree.Entry, "foo"))
+	gitSuite.Nil(lookupNode(&tree.Entry, "foo/bar"))
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForNonExisting() {
@@ -86,19 +128,21 @@ func (gitSuite *gitTestSuite) TestListTreeForNonExisting() {
 func (gitSuite *gitTestSuite) TestListTreeForShortSha() {
 	tree, err := gitSuite.provider.ListTree("2ca7420")
 	gitSuite.Nil(err, "git.ListTree: %w", err)
-	gitSuite.EqualValues(209, len(tree), "tree size not as expected")
+	gitSuite.EqualValues(209, countTreeNodes(&tree.Entry), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForMainBranchName() {
 	tree, err := gitSuite.provider.ListTree("master")
 	gitSuite.Nil(err, "git.ListTree: %w", err)
-	gitSuite.EqualValues(211, len(tree), "tree size not as expected")
+	gitSuite.EqualValues(211, len(tree.EntriesByPath), "tree size not as expected")
+	gitSuite.EqualValues(211, countTreeNodes(&tree.Entry), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForBranchName() {
 	tree, err := gitSuite.provider.ListTree("remotes/origin/lfx")
 	gitSuite.Nil(err, "git.ListTree: %w", err)
-	gitSuite.EqualValues(209, len(tree), "tree size not as expected")
+	gitSuite.EqualValues(209, len(tree.EntriesByPath), "tree size not as expected")
+	gitSuite.EqualValues(209, countTreeNodes(&tree.Entry), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestFileContents() {

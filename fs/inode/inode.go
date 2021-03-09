@@ -23,7 +23,7 @@ func NextInodeID() (next fuseops.InodeID) {
 }
 
 type InodeInterface interface {
-	GetOrAddChild(name string) (Inode, error)
+	GetOrAddChild(name string) (*Inode, error)
 	Attributes() fuseops.InodeAttributes
 	ListChildren() ([]fuseutil.Dirent, error)
 	Contents() (string, error)
@@ -37,15 +37,17 @@ type Inode struct {
 }
 
 func (in *Inode) Attributes() fuseops.InodeAttributes {
+	// default implementation
 	return fs.DirAttributes()
 }
 
 func (in *Inode) ListChildren() ([]fuseutil.Dirent, error) {
+	// default implementation
 	return []fuseutil.Dirent{}, nil
 }
 
-
 func (in *Inode) Contents() (string, error) {
+	// default implementation
 	return "", nil
 }
 

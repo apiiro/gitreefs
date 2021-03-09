@@ -11,6 +11,7 @@ const (
 	MaxFileSizeMB    int64 = 6
 	MaxFileSizeBytes       = MaxFileSizeMB * 1024 * 1024
 	ShortShaLength         = 7
+	RootEntryPath          = ""
 )
 
 type RepositoryProvider struct {
@@ -18,7 +19,7 @@ type RepositoryProvider struct {
 	shortShaMapping map[string]string
 }
 
-func NewRepository(clonePath string) (provider *RepositoryProvider, err error) {
+func NewRepositoryProvider(clonePath string) (provider *RepositoryProvider, err error) {
 	provider = &RepositoryProvider{
 		shortShaMapping: make(map[string]string),
 	}
@@ -61,17 +62,7 @@ func (provider *RepositoryProvider) getCommit(commitish string) (commit *object.
 	return
 }
 
-func (provider *RepositoryProvider) ensureAncestors(dirPath string, entriesByPath map[string]Entry) {
-	if len(dirPath) == 0 || dirPath == "." {
-		return
-	}
-	if _, found := entriesByPath[dirPath]; !found {
-		entriesByPath[dirPath] = DirEntry(dirPath)
-	}
-	provider.ensureAncestors(ExtractDirPath(dirPath), entriesByPath)
-}
-
-func (provider *RepositoryProvider) ListTree(commitish string) (entriesByPath map[string]Entry, err error) {
+func (provider *RepositoryProvider) ListTree(commitish string) (root *RootEntry, err error) {
 
 	var commit *object.Commit
 	commit, err = provider.getCommit(commitish)
@@ -85,7 +76,15 @@ func (provider *RepositoryProvider) ListTree(commitish string) (entriesByPath ma
 		return
 	}
 
-	entriesByPath = map[string]Entry{"": DirEntry("")}
+	root = &RootEntry{
+		Entry: Entry{
+			Size:          0,
+			IsDir:         true,
+			EntriesByName: make(map[string]*Entry),
+		},
+		EntriesByPath: make(map[string]*Entry),
+	}
+	root.EntriesByPath[RootEntryPath] = &root.Entry
 
 	err = tree.Files().ForEach(func(file *object.File) (err error) {
 		mode := file.Mode
@@ -95,8 +94,9 @@ func (provider *RepositoryProvider) ListTree(commitish string) (entriesByPath ma
 		filePath := file.Name
 		fileName := ExtractBaseName(filePath)
 		parentPath := ExtractDirPath(filePath)
-		provider.ensureAncestors(parentPath, entriesByPath)
-		entriesByPath[file.Name] = FileEntry(fileName, parentPath, file.Size)
+		parent := root.ensurePath(parentPath)
+		fileEntry := FileEntry(parent, fileName, file.Size)
+		root.EntriesByPath[filePath] = fileEntry
 		return
 	})
 
