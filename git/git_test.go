@@ -12,6 +12,7 @@ type gitTestSuite struct {
 	suite.Suite
 	remote    string
 	clonePath string
+	provider  *RepositoryProvider
 }
 
 func TestGitTestSuite(t *testing.T) {
@@ -29,13 +30,6 @@ func cloneLocal(remote string) (clonePath string, err error) {
 		return
 	}
 	err = proc.Wait()
-	/*
-	_, err = git.PlainClone(clonePath, false, &git.CloneOptions{
-			URL:          remote,
-			SingleBranch: false,
-			NoCheckout:   true,
-		})
-	 */
 	return
 }
 
@@ -47,6 +41,7 @@ func (gitSuite *gitTestSuite) SetupTest() {
 		return
 	}
 	gitSuite.clonePath = clonePath
+	gitSuite.provider, err = NewRepository(clonePath)
 }
 
 func (gitSuite *gitTestSuite) TearDownTest() {
@@ -54,7 +49,7 @@ func (gitSuite *gitTestSuite) TearDownTest() {
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForRegularCommit() {
-	tree, err := ListTree(gitSuite.clonePath, "2ca742044ba451d00c6854a465fdd4280d9ad1f5")
+	tree, err := gitSuite.provider.ListTree("2ca742044ba451d00c6854a465fdd4280d9ad1f5")
 	gitSuite.Nil(err, "git.ListTree: %w", err)
 	gitSuite.EqualValues(209, len(tree), "tree size not as expected")
 	gitSuite.Contains(tree, "", "no root entry")
@@ -82,41 +77,41 @@ func (gitSuite *gitTestSuite) TestListTreeForRegularCommit() {
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForNonExisting() {
-	_, err := ListTree(gitSuite.clonePath, "wat")
+	_, err := gitSuite.provider.ListTree("wat")
 	gitSuite.NotNil(err)
-	_, err = ListTree(gitSuite.clonePath, "23ce6f6bd72532aa410afeb8939ed6911c526f60f1411c1a40952928f90e15ad")
+	_, err = gitSuite.provider.ListTree("23ce6f6bd72532aa410afeb8939ed6911c526f60f1411c1a40952928f90e15ad")
 	gitSuite.NotNil(err)
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForShortSha() {
-	_, err := ListTree(gitSuite.clonePath, "2ca7420")
-	// At the moment short sha is not working https://github.com/go-git/go-git/issues/148
-	gitSuite.NotNil(err)
+	tree, err := gitSuite.provider.ListTree("2ca7420")
+	gitSuite.Nil(err, "git.ListTree: %w", err)
+	gitSuite.EqualValues(209, len(tree), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForMainBranchName() {
-	tree, err := ListTree(gitSuite.clonePath, "master")
+	tree, err := gitSuite.provider.ListTree("master")
 	gitSuite.Nil(err, "git.ListTree: %w", err)
 	gitSuite.EqualValues(211, len(tree), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForBranchName() {
-	tree, err := ListTree(gitSuite.clonePath, "remotes/origin/lfx")
+	tree, err := gitSuite.provider.ListTree("remotes/origin/lfx")
 	gitSuite.Nil(err, "git.ListTree: %w", err)
 	gitSuite.EqualValues(209, len(tree), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestFileContents() {
-	contents, err := FileContents(gitSuite.clonePath, "2ca742044ba451d00c6854a465fdd4280d9ad1f5", "src/main/java/com/dchealth/service/common/YunUserService.java")
+	contents, err := gitSuite.provider.FileContents("2ca742044ba451d00c6854a465fdd4280d9ad1f5", "src/main/java/com/dchealth/service/common/YunUserService.java")
 	gitSuite.Nil(err, "git.ListTree: %w", err)
 	gitSuite.EqualValues(28092, len(contents), "file contents size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestFileContentsForNonExisting() {
-	contents, err := FileContents(gitSuite.clonePath, "2ca742044ba451d00c6854a465fdd4280d9ad1f5", "src/YunUserService.java")
+	contents, err := gitSuite.provider.FileContents("2ca742044ba451d00c6854a465fdd4280d9ad1f5", "src/YunUserService.java")
 	gitSuite.NotNil(err)
 	gitSuite.EqualValues(0, len(contents), "file contents size not as expected")
-	contents, err = FileContents(gitSuite.clonePath, "wat", "src/main/java/com/dchealth/service/common/YunUserService.java")
+	contents, err = gitSuite.provider.FileContents("wat", "src/main/java/com/dchealth/service/common/YunUserService.java")
 	gitSuite.NotNil(err)
 	gitSuite.EqualValues(0, len(contents), "file contents size not as expected")
 }

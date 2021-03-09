@@ -10,40 +10,71 @@ import (
 const (
 	MaxFileSizeMB    int64 = 6
 	MaxFileSizeBytes       = MaxFileSizeMB * 1024 * 1024
+	ShortShaLength         = 7
 )
 
-func getCommit(clonePath string, commitish string) (commit *object.Commit, err error) {
+type RepositoryProvider struct {
+	repository      *git.Repository
+	shortShaMapping map[string]string
+}
 
-	var repository *git.Repository
-	repository, err = git.PlainOpen(clonePath)
+func NewRepository(clonePath string) (provider *RepositoryProvider, err error) {
+	provider = &RepositoryProvider{
+		shortShaMapping: make(map[string]string),
+	}
+	provider.repository, err = git.PlainOpen(clonePath)
 	if err != nil {
 		return
 	}
 
-	var hash *plumbing.Hash
-	hash, err = repository.ResolveRevision(plumbing.Revision(commitish))
+	// Manual implementation of short sha mapping, due to bug in go-git: https://github.com/go-git/go-git/issues/148
+	var iter object.CommitIter
+	iter, err = provider.repository.CommitObjects()
 	if err != nil {
 		return
 	}
-
-	commit, err = repository.CommitObject(*hash)
+	err = iter.ForEach(func(commit *object.Commit) error {
+		sha := commit.Hash.String()
+		shortSha := sha[:ShortShaLength]
+		provider.shortShaMapping[shortSha] = sha
+		return nil
+	})
 	return
 }
 
-func ensureAncestors(dirPath string, entriesByPath map[string]Entry) {
+func (provider *RepositoryProvider) getCommit(commitish string) (commit *object.Commit, err error) {
+
+	if len(commitish) == ShortShaLength {
+		sha, found := provider.shortShaMapping[commitish]
+		if found {
+			commitish = sha
+		}
+	}
+
+	var hash *plumbing.Hash
+	hash, err = provider.repository.ResolveRevision(plumbing.Revision(commitish))
+	if err != nil {
+		return
+	}
+
+	commit, err = provider.repository.CommitObject(*hash)
+	return
+}
+
+func (provider *RepositoryProvider) ensureAncestors(dirPath string, entriesByPath map[string]Entry) {
 	if len(dirPath) == 0 || dirPath == "." {
 		return
 	}
 	if _, found := entriesByPath[dirPath]; !found {
 		entriesByPath[dirPath] = DirEntry(dirPath)
 	}
-	ensureAncestors(ExtractDirPath(dirPath), entriesByPath)
+	provider.ensureAncestors(ExtractDirPath(dirPath), entriesByPath)
 }
 
-func ListTree(clonePath string, commitish string) (entriesByPath map[string]Entry, err error) {
+func (provider *RepositoryProvider) ListTree(commitish string) (entriesByPath map[string]Entry, err error) {
 
 	var commit *object.Commit
-	commit, err = getCommit(clonePath, commitish)
+	commit, err = provider.getCommit(commitish)
 	if err != nil {
 		return
 	}
@@ -64,7 +95,7 @@ func ListTree(clonePath string, commitish string) (entriesByPath map[string]Entr
 		filePath := file.Name
 		fileName := ExtractBaseName(filePath)
 		parentPath := ExtractDirPath(filePath)
-		ensureAncestors(parentPath, entriesByPath)
+		provider.ensureAncestors(parentPath, entriesByPath)
 		entriesByPath[file.Name] = FileEntry(fileName, parentPath, file.Size)
 		return
 	})
@@ -72,9 +103,9 @@ func ListTree(clonePath string, commitish string) (entriesByPath map[string]Entr
 	return
 }
 
-func FileContents(clonePath string, commitish string, filePath string) (contents string, err error) {
+func (provider *RepositoryProvider) FileContents(commitish string, filePath string) (contents string, err error) {
 	var commit *object.Commit
-	commit, err = getCommit(clonePath, commitish)
+	commit, err = provider.getCommit(commitish)
 	if err != nil {
 		return
 	}
@@ -86,7 +117,7 @@ func FileContents(clonePath string, commitish string, filePath string) (contents
 	}
 
 	if file.Size >= MaxFileSizeBytes {
-		err = fmt.Errorf("file size is too large to load to memory - %v at %v/%v/%v", file.Size, clonePath, commitish, filePath)
+		err = fmt.Errorf("file size is too large to load to memory - %v at %v/%v", file.Size, commitish, filePath)
 		return
 	}
 
