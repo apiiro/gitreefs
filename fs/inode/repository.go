@@ -31,7 +31,6 @@ func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode,
 		Inode: Inode{
 			Id:      NextInodeID(),
 			OwnerId: fuseops.RootInodeID,
-			Name:    name,
 		},
 		provider:  provider,
 		clonePath: clonePath,

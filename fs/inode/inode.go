@@ -25,7 +25,7 @@ func NextInodeID() (next fuseops.InodeID) {
 type InodeInterface interface {
 	GetOrAddChild(name string) (*Inode, error)
 	Attributes() fuseops.InodeAttributes
-	ListChildren() ([]fuseutil.Dirent, error)
+	ListChildren(buffer []byte, offset int) ([]fuseutil.Dirent, error)
 	Contents() (string, error)
 }
 
@@ -33,7 +33,6 @@ type Inode struct {
 	InodeInterface
 	Id      fuseops.InodeID
 	OwnerId fuseops.InodeID
-	Name    string
 }
 
 func (in *Inode) Attributes() fuseops.InodeAttributes {
@@ -41,7 +40,7 @@ func (in *Inode) Attributes() fuseops.InodeAttributes {
 	return fs.DirAttributes()
 }
 
-func (in *Inode) ListChildren() ([]fuseutil.Dirent, error) {
+func (in *Inode) ListChildren([]byte, int) ([]fuseutil.Dirent, error) {
 	// default implementation
 	return []fuseutil.Dirent{}, nil
 }
@@ -52,5 +51,5 @@ func (in *Inode) Contents() (string, error) {
 }
 
 func (in *Inode) String() string {
-	return fmt.Sprintf("%v:{InodeID=%v,Name='%v'}", reflect.TypeOf(in), in.Id, in.Name)
+	return fmt.Sprintf("%v:{InodeID=%v}", reflect.TypeOf(in), in.Id)
 }

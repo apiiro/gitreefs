@@ -72,7 +72,7 @@ func (fs *fuseFs) ReadDir(
 	if !found {
 		return fuse.ENOENT
 	}
-	children, err := inode.ListChildren()
+	children, err := inode.ListChildren(op.Dst)
 	if err != nil {
 		logger.Error("fuseFs.ReadDir for %v: %w", inode, err)
 		return fuse.EIO

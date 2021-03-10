@@ -3,7 +3,6 @@ module gitreefs
 go 1.14
 
 require (
-	github.com/ahmetb/go-linq/v3 v3.2.0
 	github.com/go-git/go-git/v5 v5.2.0
 	github.com/jacobsa/daemonize v0.0.0-20160101105449-e460293e890f
 	github.com/jacobsa/fuse v0.0.0-20201216155545-e0296dec955f
