@@ -1,4 +1,4 @@
-package options
+package main
 
 import (
 	"fmt"
@@ -17,26 +17,21 @@ USAGE:
    {{.Name}} {{if .Flags}}[global Options]{{end}} clones mountpoint
 GLOBAL OPTIONS:
    {{range .Flags}}{{.}}
-   {{end}}{{end}}
+   {{end}}
 `
 }
 
 func Init() (app *cli.App) {
 	app = &cli.App{
 		Name:    "gitreefs",
-		Version: "0.1",
+		Version: Version,
 		Usage:   "Mount a forest of git trees as a virtual file system",
 		Writer:  os.Stderr,
 		Flags: []cli.Flag{
 
-			cli.BoolFlag{
-				Name:  "foreground",
-				Usage: "Stay in the foreground after mounting.",
-			},
-
 			cli.StringFlag{
 				Name:  "log-file",
-				Value: "logs/gitreefs-%v.log",
+				Value: "logs/gitreefs-%v-%v.log",
 				Usage: "Output logs file path format.",
 			},
 
@@ -52,14 +47,13 @@ func Init() (app *cli.App) {
 }
 
 type Options struct {
-	Foreground bool
 	LogFile    string
 	LogLevel   string
 	ClonesPath string
 	MountPoint string
 }
 
-func ParseOptions(c *cli.Context, err error) (opts *Options) {
+func ParseOptions(c *cli.Context) (opts *Options, err error) {
 	var clonesPath, mountPoint string
 	switch len(c.Args()) {
 
@@ -72,7 +66,7 @@ func ParseOptions(c *cli.Context, err error) (opts *Options) {
 			"%s takes exactly two arguments. Run `%s --help` for more info",
 			path.Base(os.Args[0]),
 			path.Base(os.Args[0]),
-			)
+		)
 
 		return
 	}
@@ -84,12 +78,11 @@ func ParseOptions(c *cli.Context, err error) (opts *Options) {
 
 	mountPoint, err = filepath.Abs(mountPoint)
 	if err != nil {
-		err = fmt.Errorf("canonicalizing mountFs point: %w", err)
+		err = fmt.Errorf("canonicalizing mountFs point: %v", err)
 		return
 	}
 
 	opts = &Options{
-		Foreground: c.Bool("foreground"),
 		LogFile:    c.String("log-file"),
 		LogLevel:   c.String("log-level"),
 		ClonesPath: clonesPath,
@@ -97,4 +90,3 @@ func ParseOptions(c *cli.Context, err error) (opts *Options) {
 	}
 	return
 }
-

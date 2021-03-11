@@ -13,22 +13,33 @@ import (
 type LogLevel uint32
 
 const (
-	_             LogLevel = iota
-	LogLevelDebug          = iota
-	LogLevelInfo           = iota
-	LogLevelError          = iota
+	_ LogLevel = iota
+	LogLevelDebug
+	LogLevelInfo
+	LogLevelError
 )
 
 var (
 	DebugLogger *log.Logger
 	InfoLogger  *log.Logger
 	ErrorLogger *log.Logger
-	File        *os.File
-	GlobalLevel LogLevel
+	fileHandler *os.File
+	globalLevel LogLevel
 )
 
+func init() {
+	initLoggers()
+}
+
+func initLoggers() {
+	flag := log.Ldate | log.Ltime | log.Lmicroseconds
+	DebugLogger = log.New(createLogger(LogLevelDebug), "DEBUG: ", flag)
+	InfoLogger = log.New(createLogger(LogLevelInfo), "INFO: ", flag)
+	ErrorLogger = log.New(createLogger(LogLevelError), "ERROR: ", flag)
+}
+
 func InitLoggers(filePathFormat string, level string) error {
-	var filePath = fmt.Sprintf(filePathFormat, time.Now().UTC().Format("2006-01-02"))
+	var filePath = fmt.Sprintf(filePathFormat, time.Now().UTC().Format("2006-01-02"), os.Getpid())
 	var filePermissions os.FileMode = 0777
 	err := os.Mkdir(filepath.Dir(filePath), filePermissions)
 	if err != nil && !strings.Contains(err.Error(), "file exists") {
@@ -44,13 +55,10 @@ func InitLoggers(filePathFormat string, level string) error {
 		return err
 	}
 
-	File = file
-	GlobalLevel = stringToLevel(level)
+	fileHandler = file
+	globalLevel = stringToLevel(level)
 
-	flag := log.Ldate | log.Ltime | log.Lmicroseconds
-	DebugLogger = log.New(createLogger(LogLevelDebug), "DEBUG: ", flag)
-	InfoLogger = log.New(createLogger(LogLevelInfo), "INFO: ", flag)
-	ErrorLogger = log.New(createLogger(LogLevelError), "ERROR: ", flag)
+	initLoggers()
 
 	return nil
 }
@@ -91,35 +99,39 @@ func createLogger(level LogLevel) io.Writer {
 		consoleWriter = os.Stdout
 	}
 
+	writers := []io.Writer{consoleWriter}
+	if fileHandler != nil {
+		writers = append(writers, fileHandler)
+	}
 	return &jsonWriter{
 		level:   levelToString(level),
-		writers: []io.Writer{consoleWriter, File},
+		writers: writers,
 	}
 }
 
 func CloseLoggers() {
-	if File != nil {
-		File.Close()
-		File = nil
+	if fileHandler != nil {
+		fileHandler.Close()
+		fileHandler = nil
 	}
 }
 
 func Debug(format string, v ...interface{}) {
-	if GlobalLevel > LogLevelDebug {
+	if globalLevel > LogLevelDebug {
 		return
 	}
 	DebugLogger.Printf(format+"\n", v...)
 }
 
 func Info(format string, v ...interface{}) {
-	if GlobalLevel > LogLevelInfo {
+	if globalLevel > LogLevelInfo {
 		return
 	}
 	InfoLogger.Printf(format+"\n", v...)
 }
 
 func Error(format string, v ...interface{}) {
-	if GlobalLevel > LogLevelError {
+	if globalLevel > LogLevelError {
 		return
 	}
 	ErrorLogger.Printf(format+"\n", v...)

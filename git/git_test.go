@@ -2,6 +2,7 @@ package git
 
 import (
 	"github.com/stretchr/testify/suite"
+	"gitreefs"
 	"gitreefs/logger"
 	"io/ioutil"
 	"os"
@@ -51,7 +52,7 @@ func (gitSuite *gitTestSuite) TearDownTest() {
 	os.RemoveAll(gitSuite.clonePath)
 }
 
-func countTreeNodes(node *Entry) uint {
+func countTreeNodes(node *main.Entry) uint {
 	var count uint = 1
 	if node.IsDir {
 		for _, child := range node.EntriesByName {
@@ -61,11 +62,11 @@ func countTreeNodes(node *Entry) uint {
 	return count
 }
 
-func lookupNode(node *Entry, path string) *Entry {
+func lookupNode(node *main.Entry, path string) *main.Entry {
 	return lookupNodeRecursive(node, strings.Split(path, "/"))
 }
 
-func lookupNodeRecursive(node *Entry, pathParts []string) (target *Entry) {
+func lookupNodeRecursive(node *main.Entry, pathParts []string) (target *main.Entry) {
 	if len(pathParts) == 0 {
 		return node
 	}
@@ -83,7 +84,7 @@ func lookupNodeRecursive(node *Entry, pathParts []string) (target *Entry) {
 
 func (gitSuite *gitTestSuite) TestListTreeForRegularCommit() {
 	tree, err := gitSuite.provider.ListTree("2ca742044ba451d00c6854a465fdd4280d9ad1f5")
-	gitSuite.Nil(err, "git.ListTree: %w", err)
+	gitSuite.Nil(err, "git.ListTree: %v", err)
 	gitSuite.EqualValues(209, len(tree.EntriesByPath), "tree size not as expected")
 	gitSuite.EqualValues(209, countTreeNodes(&tree.Entry), "tree size not as expected")
 	gitSuite.Contains(tree.EntriesByPath, "", "no root entry")
@@ -129,27 +130,27 @@ func (gitSuite *gitTestSuite) TestListTreeForNonExisting() {
 
 func (gitSuite *gitTestSuite) TestListTreeForShortSha() {
 	tree, err := gitSuite.provider.ListTree("2ca7420")
-	gitSuite.Nil(err, "git.ListTree: %w", err)
+	gitSuite.Nil(err, "git.ListTree: %v", err)
 	gitSuite.EqualValues(209, countTreeNodes(&tree.Entry), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForMainBranchName() {
 	tree, err := gitSuite.provider.ListTree("master")
-	gitSuite.Nil(err, "git.ListTree: %w", err)
+	gitSuite.Nil(err, "git.ListTree: %v", err)
 	gitSuite.EqualValues(211, len(tree.EntriesByPath), "tree size not as expected")
 	gitSuite.EqualValues(211, countTreeNodes(&tree.Entry), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestListTreeForBranchName() {
 	tree, err := gitSuite.provider.ListTree("remotes/origin/lfx")
-	gitSuite.Nil(err, "git.ListTree: %w", err)
+	gitSuite.Nil(err, "git.ListTree: %v", err)
 	gitSuite.EqualValues(209, len(tree.EntriesByPath), "tree size not as expected")
 	gitSuite.EqualValues(209, countTreeNodes(&tree.Entry), "tree size not as expected")
 }
 
 func (gitSuite *gitTestSuite) TestFileContents() {
 	contents, err := gitSuite.provider.FileContents("2ca742044ba451d00c6854a465fdd4280d9ad1f5", "src/main/java/com/dchealth/service/common/YunUserService.java")
-	gitSuite.Nil(err, "git.ListTree: %w", err)
+	gitSuite.Nil(err, "git.ListTree: %v", err)
 	gitSuite.EqualValues(28092, len(contents), "file contents size not as expected")
 }
 

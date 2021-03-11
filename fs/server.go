@@ -55,7 +55,7 @@ func (fs *fuseFs) LookUpInode(
 	op *fuseops.LookUpInodeOp) error {
 	inode, err := fs.lookUpInode(op.Parent, op.Name)
 	if err != nil {
-		logger.Error("fuseFs.LookUpInode for %v on %v: %w", inode, op.Name, err)
+		logger.Error("fuseFs.LookUpInode for %v on %v: %v", inode, op.Name, err)
 		return fuse.EIO
 	}
 	if inode == nil {
@@ -94,7 +94,7 @@ func (fs *fuseFs) ReadDir(
 	}
 	children, err := inode.ListChildren()
 	if err != nil {
-		logger.Error("fuseFs.ReadDir for %v: %w", inode, err)
+		logger.Error("fuseFs.ReadDir for %v: %v", inode, err)
 		return fuse.EIO
 	}
 
@@ -130,7 +130,7 @@ func (fs *fuseFs) ReadFile(
 	}
 	contents, err := inode.Contents()
 	if err != nil {
-		logger.Error("fuseFs.ReadFile for %v: %w", inode, err)
+		logger.Error("fuseFs.ReadFile for %v: %v", inode, err)
 		return fuse.EIO
 	}
 

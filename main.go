@@ -3,20 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jacobsa/daemonize"
 	"github.com/jacobsa/fuse"
-	"github.com/kardianos/osext"
 	"github.com/urfave/cli"
 	"gitreefs/fs"
 	"gitreefs/logger"
-	"gitreefs/options"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 func main() {
-	app := options.Init()
+	app := Init()
 
 	var internalErr error
 	app.Action = func(context *cli.Context) {
@@ -24,43 +21,25 @@ func main() {
 	}
 
 	runErr := app.Run(os.Args)
+	exitError := false
 	if runErr != nil {
-		logger.Error("main: %w", runErr)
-		os.Exit(1)
+		logger.Error("main: %v", runErr)
+		exitError = true
 	}
 	if internalErr != nil {
-		logger.Error("main: %w", internalErr)
+		logger.Error("main: %v", internalErr)
+		exitError = true
+	}
+	logger.CloseLoggers()
+	if exitError {
 		os.Exit(1)
 	}
 	return
 }
 
-func dispatchDaemon() error {
-	var err error
-	var executablePath string
-	executablePath, err = osext.Executable()
-	if err != nil {
-		return fmt.Errorf("osext.Executable: %w", err)
-	}
-
-	args := append([]string{"--foreground"}, os.Args[1:]...)
-
-	env := []string{
-		fmt.Sprintf("PATH=%s", os.Getenv("PATH")),
-	}
-
-	err = daemonize.Run(executablePath, args, env, os.Stdout)
-	if err != nil {
-		return fmt.Errorf("daemonize.Run: %w", err)
-	}
-
-	return nil
-}
-
 func run(ctx *cli.Context) error {
-	var err error
 
-	var opts = options.ParseOptions(ctx, err)
+	opts, err := ParseOptions(ctx)
 	if err != nil {
 		return fmt.Errorf("parsing options: %w", err)
 	}
@@ -72,20 +51,14 @@ func run(ctx *cli.Context) error {
 
 	logger.Info("Using mountFs: %v --> %v", opts.ClonesPath, opts.MountPoint)
 
-	if !opts.Foreground {
-		return dispatchDaemon()
-	}
-
 	var mountedFs *fuse.MountedFileSystem
 	{
 		mountedFs, err = mountFs(opts, false)
 
 		if err == nil {
-			logger.Info("File system has been successfully mounted.")
-			daemonize.SignalOutcome(nil)
+			logger.Info("fileHandler system has been successfully mounted.")
 		} else {
 			err = fmt.Errorf("mountFs: %w", err)
-			daemonize.SignalOutcome(err)
 			return err
 		}
 	}
@@ -97,7 +70,7 @@ func run(ctx *cli.Context) error {
 		return fmt.Errorf("MountedFileSystem.Join: %w", err)
 	}
 
-	logger.Info("File system has been successfully un-mounted.")
+	logger.Info("fileHandler system has been successfully un-mounted.")
 
 	return nil
 }
@@ -105,7 +78,7 @@ func run(ctx *cli.Context) error {
 func unmount(mountPoint string) error {
 	err := fuse.Unmount(mountPoint)
 	if err != nil {
-		logger.Error("Failed to unmount in response to SIGINT: %w", err)
+		logger.Error("Failed to unmount in response to SIGINT: %v", err)
 		return err
 	} else {
 		logger.Info("Successfully unmounted in response to SIGINT.")
@@ -113,7 +86,7 @@ func unmount(mountPoint string) error {
 	return nil
 }
 
-func mountFs(opts *options.Options, isRetry bool) (mountedFs *fuse.MountedFileSystem, err error) {
+func mountFs(opts *Options, isRetry bool) (mountedFs *fuse.MountedFileSystem, err error) {
 
 	fuseServer, err := fs.NewFsServer(opts.ClonesPath)
 	if err != nil {
@@ -152,7 +125,7 @@ func registerSignalHandler(mountPoint string) {
 			logger.Info("Received SIGINT, attempting to unmount...")
 			err := unmount(mountPoint)
 			if err != nil {
-				logger.Error("Failed to unmount: %w", err)
+				logger.Error("Failed to unmount: %v", err)
 			}
 		}
 	}()

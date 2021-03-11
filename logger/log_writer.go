@@ -35,7 +35,9 @@ func (f *jsonWriter) Write(message []byte) (bytesWritten int, err error) {
 	//}
 	//buf = append(buf, '\n')
 	for _, writer := range f.writers {
-		_, err = writer.Write(message)
+		if writer != nil {
+			_, err = writer.Write(message)
+		}
 	}
 
 	bytesWritten = len(message)
