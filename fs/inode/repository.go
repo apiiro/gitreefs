@@ -4,6 +4,7 @@ import (
 	"github.com/jacobsa/fuse/fuseops"
 	"gitreefs/fs"
 	"gitreefs/git"
+	"gitreefs/logger"
 	"path"
 	"sync"
 )
@@ -37,6 +38,7 @@ func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode,
 		commitishByName: map[string]*CommitishInode{},
 		mutex:           &sync.Mutex{},
 	}
+	logger.Debug("NewRepositoryInode: %v", inode.clonePath)
 	return
 }
 

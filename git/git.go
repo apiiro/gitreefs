@@ -5,6 +5,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"gitreefs/logger"
 )
 
 const (
@@ -40,6 +41,8 @@ func NewRepositoryProvider(clonePath string) (provider *RepositoryProvider, err 
 		provider.shortShaMapping[shortSha] = sha
 		return nil
 	})
+
+	logger.Info("NewRepositoryProvider for %v with total of %v commits detected", clonePath, len(provider.shortShaMapping))
 	return
 }
 
@@ -100,6 +103,8 @@ func (provider *RepositoryProvider) ListTree(commitish string) (root *RootEntry,
 		return
 	})
 
+	logger.Info("ListTree for %v with total of %v paths detected", commitish, len(root.EntriesByPath))
+
 	return
 }
 
@@ -122,5 +127,8 @@ func (provider *RepositoryProvider) FileContents(commitish string, filePath stri
 	}
 
 	contents, err = file.Contents()
+	if err != nil {
+		logger.Info("FileContents for %v :: %v with content of size %v", commitish, filePath, len(contents))
+	}
 	return
 }

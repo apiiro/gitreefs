@@ -3,6 +3,7 @@ package fs
 import (
 	"github.com/jacobsa/fuse/fuseutil"
 	"gitreefs/git"
+	"gitreefs/logger"
 	"path"
 	"sync"
 )
@@ -27,6 +28,7 @@ func NewCommitishInode(parent *RepositoryInode, commitish string) (inode *Commit
 		isFetched:  false,
 		mutex:      &sync.Mutex{},
 	}
+	logger.Debug("NewCommitishInode: %v :: %v", commitish, parent.clonePath)
 	return
 }
 
