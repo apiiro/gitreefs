@@ -46,22 +46,27 @@ func (in *EntryInode) Attributes() fuseops.InodeAttributes {
 	return fs.FileAttributes(in.size)
 }
 
-func (in *EntryInode) ListChildren(buffer []byte, offset int) (dirents []fuseutil.Dirent, err error) {
+func (in *EntryInode) GetOrAddChild(name string) (child *Inode, err error) {
+	childEntry, found := in.entriesByName[name]
+	if !found {
+		return nil, fmt.Errorf("no child with name %v for %v", name, in)
+	}
+	return &childEntry.Inode, err
+}
+
+func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
 	if !in.isDir {
-		return in.Inode.ListChildren(buffer, offset)
+		return in.Inode.ListChildren()
 	}
-	if offset >= len(in.entriesByName) {
-		return nil, fmt.Errorf("offset is too big: %v >= %v", offset, len(in.entriesByName))
-	}
-	names := make([]string, len(in.entriesByName)-offset)
+	names := make([]string, len(in.entriesByName))
 	i := 0
 	for name, _ := range in.entriesByName {
 		names[i] = name
 		i++
 	}
 	sort.Strings(names)
-	dirents = make([]fuseutil.Dirent, len(in.entriesByName))
-	for i := offset; i < len(names); i++ {
+	children = make([]*fuseutil.Dirent, len(in.entriesByName))
+	for i := 0; i < len(names); i++ {
 		name := names[i]
 		childEntry := in.entriesByName[name]
 		var childType fuseutil.DirentType
@@ -70,12 +75,12 @@ func (in *EntryInode) ListChildren(buffer []byte, offset int) (dirents []fuseuti
 		} else {
 			childType = fuseutil.DT_File
 		}
-		fuseutil.WriteDirent(buffer, fuseutil.Dirent{
+		children[i] = &fuseutil.Dirent{
 			Offset: fuseops.DirOffset(i),
 			Inode:  childEntry.Id,
 			Name:   name,
 			Type:   childType,
-		})
+		}
 	}
 	return
 }

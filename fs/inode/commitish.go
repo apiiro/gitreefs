@@ -54,21 +54,39 @@ func (in *CommitishInode) inodeTreeFromGitTree(gitEntry *git.Entry, entryPath st
 	return
 }
 
-func (in *CommitishInode) ListChildren(buffer []byte, offset int) ([]fuseutil.Dirent, error) {
+func (in *CommitishInode) fetchContentIfNeeded() (err error) {
 	if !in.isFetched {
 		in.mutex.Lock()
 		if !in.isFetched {
 			root, err := in.repository.provider.ListTree(in.commitish)
 			if err != nil {
-				return nil, err
+				in.mutex.Unlock()
+				return err
 			}
 			in.rootEntry, err = in.inodeTreeFromGitTree(&root.Entry, "")
 			if err != nil {
-				return nil, err
+				in.mutex.Unlock()
+				return err
 			}
 			in.isFetched = true
 		}
 		in.mutex.Unlock()
 	}
-	return in.rootEntry.ListChildren(buffer, offset)
+	return nil
+}
+
+func (in *CommitishInode) GetOrAddChild(name string) (child *Inode, err error) {
+	err = in.fetchContentIfNeeded()
+	if err != nil {
+		return nil, err
+	}
+	return in.rootEntry.GetOrAddChild(name)
+}
+
+func (in *CommitishInode) ListChildren() (_ []*fuseutil.Dirent, err error) {
+	err = in.fetchContentIfNeeded()
+	if err != nil {
+		return nil, err
+	}
+	return in.rootEntry.ListChildren()
 }

@@ -25,7 +25,7 @@ func NextInodeID() (next fuseops.InodeID) {
 type InodeInterface interface {
 	GetOrAddChild(name string) (*Inode, error)
 	Attributes() fuseops.InodeAttributes
-	ListChildren(buffer []byte, offset int) ([]fuseutil.Dirent, error)
+	ListChildren() (children []*fuseutil.Dirent, err error)
 	Contents() (string, error)
 }
 
@@ -40,9 +40,9 @@ func (in *Inode) Attributes() fuseops.InodeAttributes {
 	return fs.DirAttributes()
 }
 
-func (in *Inode) ListChildren([]byte, int) ([]fuseutil.Dirent, error) {
+func (in *Inode) ListChildren() ([]*fuseutil.Dirent, error) {
 	// default implementation
-	return []fuseutil.Dirent{}, nil
+	return []*fuseutil.Dirent{}, nil
 }
 
 func (in *Inode) Contents() (string, error) {

@@ -10,10 +10,10 @@ import (
 
 type RepositoryInode struct {
 	Inode
-	clonePath string
-	provider  *git.RepositoryProvider
-	children  map[string]*CommitishInode
-	mutex     *sync.Mutex
+	clonePath       string
+	provider        *git.RepositoryProvider
+	commitishByName map[string]*CommitishInode
+	mutex           *sync.Mutex
 }
 
 func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode, err error) {
@@ -32,26 +32,26 @@ func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode,
 			Id:      NextInodeID(),
 			OwnerId: fuseops.RootInodeID,
 		},
-		provider:  provider,
-		clonePath: clonePath,
-		children:  map[string]*CommitishInode{},
-		mutex:     &sync.Mutex{},
+		provider:        provider,
+		clonePath:       clonePath,
+		commitishByName: map[string]*CommitishInode{},
+		mutex:           &sync.Mutex{},
 	}
 	return
 }
 
 func (in *RepositoryInode) GetOrAddChild(name string) (child *Inode, err error) {
-	var found bool
-	var commitish *CommitishInode
+	commitish, found := in.commitishByName[name]
 	if !found {
 		in.mutex.Lock()
-		commitish, found = in.children[name]
+		commitish, found = in.commitishByName[name]
 		if !found {
 			commitish, err = NewCommitishInode(in, name)
 			if err != nil {
+				in.mutex.Unlock()
 				return
 			}
-			in.children[name] = commitish
+			in.commitishByName[name] = commitish
 		}
 		in.mutex.Unlock()
 	}

@@ -12,13 +12,20 @@ import (
 type fuseFs struct {
 	fuseutil.NotImplementedFileSystem
 	clonesPath string
-	inodes     map[fuseops.InodeID]fs.Inode
+	inodes     map[fuseops.InodeID]*fs.Inode
 }
 
 func NewFsServer(clonesPath string) (server fuse.Server, err error) {
+	var rootInode *fs.RootInode
+	rootInode, err = fs.NewRootInode(clonesPath)
+	if err != nil {
+		return
+	}
 	server = fuseutil.NewFileSystemServer(&fuseFs{
 		clonesPath: clonesPath,
-		inodes:     make(map[fuseops.InodeID]fs.Inode),
+		inodes: map[fuseops.InodeID]*fs.Inode{
+			rootInode.Id: &rootInode.Inode,
+		},
 	})
 	return
 }
@@ -29,21 +36,35 @@ func (fs *fuseFs) StatFS(
 	return nil
 }
 
+func (fs *fuseFs) lookUpInode(parentId fuseops.InodeID, name string) (inode *fs.Inode, err error) {
+	parent, found := fs.inodes[parentId]
+	if !found {
+		return nil, nil
+	}
+	inode, err = parent.GetOrAddChild(name)
+	if err != nil {
+		return
+	}
+	if _, found = fs.inodes[inode.Id]; !found {
+		fs.inodes[inode.Id] = inode
+	}
+	return
+}
+
 func (fs *fuseFs) LookUpInode(
 	ctx context.Context,
 	op *fuseops.LookUpInodeOp) error {
-	var parent, found = fs.inodes[op.Parent]
-	if !found {
-		return fuse.ENOENT
-	}
-	inode, err := parent.GetOrAddChild(op.Name)
+	inode, err := fs.lookUpInode(op.Parent, op.Name)
 	if err != nil {
 		logger.Error("fuseFs.LookUpInode for %v on %v: %w", inode, op.Name, err)
 		return fuse.EIO
 	}
-	e := &op.Entry
-	e.Child = inode.Id
-	e.Attributes = inode.Attributes()
+	if inode == nil {
+		return fuse.ENOENT
+	}
+	outputEntry := &op.Entry
+	outputEntry.Child = inode.Id
+	outputEntry.Attributes = inode.Attributes()
 	return nil
 }
 
@@ -72,7 +93,7 @@ func (fs *fuseFs) ReadDir(
 	if !found {
 		return fuse.ENOENT
 	}
-	children, err := inode.ListChildren(op.Dst)
+	children, err := inode.ListChildren()
 	if err != nil {
 		logger.Error("fuseFs.ReadDir for %v: %w", inode, err)
 		return fuse.EIO
@@ -85,13 +106,13 @@ func (fs *fuseFs) ReadDir(
 	children = children[op.Offset:]
 
 	for _, child := range children {
-		bytesWritten := fuseutil.WriteDirent(op.Dst[op.BytesRead:], child)
+		bytesWritten := fuseutil.WriteDirent(op.Dst[op.BytesRead:], *child)
 		if bytesWritten == 0 {
 			break
 		}
 		op.BytesRead += bytesWritten
 	}
-	return fuse.ENOSYS
+	return nil
 }
 
 func (fs *fuseFs) OpenFile(
