@@ -10,6 +10,7 @@ import (
 
 type EntryInode struct {
 	Inode
+	id fuseops.InodeID
 	size          int64
 	isDir         bool
 	entriesByName map[string]*EntryInode
@@ -27,10 +28,7 @@ func NewEntryInode(commitish *CommitishInode, path string, gitEntry *git.Entry, 
 		path = ""
 	}
 	return &EntryInode{
-		Inode: Inode{
-			Id:      NextInodeID(),
-			OwnerId: commitish.Id,
-		},
+		id: NextInodeID(),
 		commitish:     commitish,
 		size:          gitEntry.Size,
 		isDir:         gitEntry.IsDir,
@@ -38,6 +36,11 @@ func NewEntryInode(commitish *CommitishInode, path string, gitEntry *git.Entry, 
 		path:          path,
 	}, nil
 }
+
+func (in *EntryInode) Id() fuseops.InodeID {
+	return in.id
+}
+
 func (in *EntryInode) Attributes() fuseops.InodeAttributes {
 	if in.isDir {
 		return DirAttributes()
@@ -45,12 +48,12 @@ func (in *EntryInode) Attributes() fuseops.InodeAttributes {
 	return FileAttributes(in.size)
 }
 
-func (in *EntryInode) GetOrAddChild(name string) (child *Inode, err error) {
+func (in *EntryInode) GetOrAddChild(name string) (child Inode, err error) {
 	childEntry, found := in.entriesByName[name]
 	if !found {
 		return nil, fmt.Errorf("no child with name %v for %v", name, in)
 	}
-	return &childEntry.Inode, err
+	return childEntry, err
 }
 
 func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
@@ -76,7 +79,7 @@ func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
 		}
 		children[i] = &fuseutil.Dirent{
 			Offset: fuseops.DirOffset(i),
-			Inode:  childEntry.Id,
+			Inode:  childEntry.id,
 			Name:   name,
 			Type:   childType,
 		}

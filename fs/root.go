@@ -2,6 +2,7 @@ package fs
 
 import (
 	"github.com/jacobsa/fuse/fuseops"
+	"github.com/jacobsa/fuse/fuseutil"
 	"sync"
 )
 
@@ -14,17 +15,13 @@ type RootInode struct {
 
 func NewRootInode(clonesPath string) (root *RootInode, err error) {
 	return &RootInode{
-		Inode: Inode{
-			Id:      fuseops.RootInodeID,
-			OwnerId: fuseops.RootInodeID,
-		},
 		clonesPath:         clonesPath,
 		repositoriesByName: make(map[string]*RepositoryInode),
 		mutex:              &sync.Mutex{},
 	}, nil
 }
 
-func (in *RootInode) GetOrAddChild(name string) (child *Inode, err error) {
+func (in *RootInode) GetOrAddChild(name string) (child Inode, err error) {
 	repository, found := in.repositoriesByName[name]
 	if !found {
 		in.mutex.Lock()
@@ -39,6 +36,25 @@ func (in *RootInode) GetOrAddChild(name string) (child *Inode, err error) {
 		}
 		in.mutex.Unlock()
 	}
-	child = &repository.Inode
+	child = repository
 	return
+}
+
+func (in *RootInode) Id() fuseops.InodeID {
+	return fuseops.RootInodeID
+}
+
+func (in *RootInode) ListChildren() ([]*fuseutil.Dirent, error) {
+	// ListChildren isn't implemented as there is no use case to list all possible commitishes
+	return []*fuseutil.Dirent{}, nil
+}
+
+func (in *RootInode) Attributes() fuseops.InodeAttributes {
+	// default implementation
+	return DirAttributes()
+}
+
+func (in *RootInode) Contents() (string, error) {
+	// default implementation
+	return "", nil
 }

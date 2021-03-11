@@ -11,7 +11,7 @@ import (
 type fuseFs struct {
 	fuseutil.NotImplementedFileSystem
 	clonesPath string
-	inodes     map[fuseops.InodeID]*Inode
+	inodes     map[fuseops.InodeID]Inode
 }
 
 func NewFsServer(clonesPath string) (server fuse.Server, err error) {
@@ -22,8 +22,8 @@ func NewFsServer(clonesPath string) (server fuse.Server, err error) {
 	}
 	server = fuseutil.NewFileSystemServer(&fuseFs{
 		clonesPath: clonesPath,
-		inodes: map[fuseops.InodeID]*Inode{
-			rootInode.Id: &rootInode.Inode,
+		inodes: map[fuseops.InodeID]Inode{
+			rootInode.Id(): rootInode,
 		},
 	})
 	return
@@ -35,17 +35,17 @@ func (fs *fuseFs) StatFS(
 	return nil
 }
 
-func (fs *fuseFs) lookUpInode(parentId fuseops.InodeID, name string) (inode *Inode, err error) {
+func (fs *fuseFs) lookUpInode(parentId fuseops.InodeID, name string) (inode Inode, err error) {
 	parent, found := fs.inodes[parentId]
 	if !found {
 		return nil, nil
 	}
 	inode, err = parent.GetOrAddChild(name)
-	if err != nil {
+	if err != nil || inode == nil {
 		return
 	}
-	if _, found = fs.inodes[inode.Id]; !found {
-		fs.inodes[inode.Id] = inode
+	if _, found = fs.inodes[inode.Id()]; !found {
+		fs.inodes[inode.Id()] = inode
 	}
 	return
 }
@@ -62,7 +62,7 @@ func (fs *fuseFs) LookUpInode(
 		return fuse.ENOENT
 	}
 	outputEntry := &op.Entry
-	outputEntry.Child = inode.Id
+	outputEntry.Child = inode.Id()
 	outputEntry.Attributes = inode.Attributes()
 	return nil
 }

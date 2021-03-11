@@ -2,6 +2,7 @@ package fs
 
 import (
 	"github.com/jacobsa/fuse/fuseops"
+	"github.com/jacobsa/fuse/fuseutil"
 	"gitreefs/git"
 	"gitreefs/logger"
 	"path"
@@ -10,6 +11,7 @@ import (
 
 type RepositoryInode struct {
 	Inode
+	id              fuseops.InodeID
 	clonePath       string
 	provider        *git.RepositoryProvider
 	commitishByName map[string]*CommitishInode
@@ -28,10 +30,7 @@ func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode,
 		return
 	}
 	inode = &RepositoryInode{
-		Inode: Inode{
-			Id:      NextInodeID(),
-			OwnerId: fuseops.RootInodeID,
-		},
+		id:              NextInodeID(),
 		provider:        provider,
 		clonePath:       clonePath,
 		commitishByName: map[string]*CommitishInode{},
@@ -41,7 +40,11 @@ func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode,
 	return
 }
 
-func (in *RepositoryInode) GetOrAddChild(name string) (child *Inode, err error) {
+func (in *RepositoryInode) Id() fuseops.InodeID {
+	return in.id
+}
+
+func (in *RepositoryInode) GetOrAddChild(name string) (child Inode, err error) {
 	commitish, found := in.commitishByName[name]
 	if !found {
 		in.mutex.Lock()
@@ -56,8 +59,21 @@ func (in *RepositoryInode) GetOrAddChild(name string) (child *Inode, err error) 
 		}
 		in.mutex.Unlock()
 	}
-	child = &commitish.Inode
+	child = commitish
 	return
 }
 
-// ListChildren isn't implemented as there is no use case to list all possible commitishes
+func (in *RepositoryInode) ListChildren() ([]*fuseutil.Dirent, error) {
+	// ListChildren isn't implemented as there is no use case to list all possible commitishes
+	return []*fuseutil.Dirent{}, nil
+}
+
+func (in *RepositoryInode) Attributes() fuseops.InodeAttributes {
+	// default implementation
+	return DirAttributes()
+}
+
+func (in *RepositoryInode) Contents() (string, error) {
+	// default implementation
+	return "", nil
+}

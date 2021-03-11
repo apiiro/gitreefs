@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
 	"gitreefs/git"
 	"gitreefs/logger"
@@ -10,6 +11,7 @@ import (
 
 type CommitishInode struct {
 	Inode
+	id         fuseops.InodeID
 	commitish  string
 	repository *RepositoryInode
 	isFetched  bool
@@ -19,10 +21,7 @@ type CommitishInode struct {
 
 func NewCommitishInode(parent *RepositoryInode, commitish string) (inode *CommitishInode, err error) {
 	inode = &CommitishInode{
-		Inode: Inode{
-			Id:      NextInodeID(),
-			OwnerId: parent.Id,
-		},
+		id:         NextInodeID(),
 		commitish:  commitish,
 		repository: parent,
 		isFetched:  false,
@@ -30,6 +29,10 @@ func NewCommitishInode(parent *RepositoryInode, commitish string) (inode *Commit
 	}
 	logger.Debug("NewCommitishInode: %v :: %v", commitish, parent.clonePath)
 	return
+}
+
+func (in *CommitishInode) Id() fuseops.InodeID {
+	return in.id
 }
 
 func (in *CommitishInode) inodeTreeFromGitTree(gitEntry *git.Entry, entryPath string) (entry *EntryInode, err error) {
@@ -77,7 +80,7 @@ func (in *CommitishInode) fetchContentIfNeeded() (err error) {
 	return nil
 }
 
-func (in *CommitishInode) GetOrAddChild(name string) (child *Inode, err error) {
+func (in *CommitishInode) GetOrAddChild(name string) (child Inode, err error) {
 	err = in.fetchContentIfNeeded()
 	if err != nil {
 		return nil, err
@@ -91,4 +94,14 @@ func (in *CommitishInode) ListChildren() (_ []*fuseutil.Dirent, err error) {
 		return nil, err
 	}
 	return in.rootEntry.ListChildren()
+}
+
+func (in *CommitishInode) Attributes() fuseops.InodeAttributes {
+	// default implementation
+	return DirAttributes()
+}
+
+func (in *CommitishInode) Contents() (string, error) {
+	// default implementation
+	return "", nil
 }

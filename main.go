@@ -1,4 +1,4 @@
-package gitreefs
+package main
 
 import (
 	"context"
@@ -15,23 +15,24 @@ import (
 	"syscall"
 )
 
-func Main() {
+func main() {
 	app := options.Init()
 
-	var err error
+	var internalErr error
 	app.Action = func(context *cli.Context) {
-		err = run(context)
+		internalErr = run(context)
 	}
 
-	err = app.Run(os.Args)
-	if err != nil {
-		return
-	}
-
-	if err != nil {
-		logger.Error("main: %w", err)
+	runErr := app.Run(os.Args)
+	if runErr != nil {
+		logger.Error("main: %w", runErr)
 		os.Exit(1)
 	}
+	if internalErr != nil {
+		logger.Error("main: %w", internalErr)
+		os.Exit(1)
+	}
+	return
 }
 
 func dispatchDaemon() error {
