@@ -10,7 +10,7 @@ import (
 
 type EntryInode struct {
 	Inode
-	id fuseops.InodeID
+	id            fuseops.InodeID
 	size          int64
 	isDir         bool
 	entriesByName map[string]*EntryInode
@@ -18,17 +18,13 @@ type EntryInode struct {
 	commitish     *CommitishInode
 }
 
-func NewEntryInode(commitish *CommitishInode, path string, gitEntry *git.Entry, entries []*EntryInode) (inode *EntryInode, err error) {
-	entriesByName := make(map[string]*EntryInode)
-	for _, entry := range entries {
-		entriesByName[git.ExtractBaseName(entry.path)] = entry
-	}
+func NewEntryInode(commitish *CommitishInode, path string, gitEntry *git.Entry, entriesByName map[string]*EntryInode) (inode *EntryInode, err error) {
 	if gitEntry.IsDir {
 		// directory paths aren't used hence aren't saved
 		path = ""
 	}
 	return &EntryInode{
-		id: NextInodeID(),
+		id:            NextInodeID(),
 		commitish:     commitish,
 		size:          gitEntry.Size,
 		isDir:         gitEntry.IsDir,
@@ -78,7 +74,7 @@ func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
 			childType = fuseutil.DT_File
 		}
 		children[i] = &fuseutil.Dirent{
-			Offset: fuseops.DirOffset(i),
+			Offset: fuseops.DirOffset(i + 1),
 			Inode:  childEntry.id,
 			Name:   name,
 			Type:   childType,

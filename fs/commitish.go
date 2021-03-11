@@ -36,25 +36,22 @@ func (in *CommitishInode) Id() fuseops.InodeID {
 }
 
 func (in *CommitishInode) inodeTreeFromGitTree(gitEntry *git.Entry, entryPath string) (entry *EntryInode, err error) {
-	var entries []*EntryInode = nil
+	entriesByName := make(map[string]*EntryInode)
 	if gitEntry.IsDir {
-		entries = make([]*EntryInode, len(gitEntry.EntriesByName))
-		i := 0
 		for name, childGitEntry := range gitEntry.EntriesByName {
 			var childEntry *EntryInode
 			childEntry, err = in.inodeTreeFromGitTree(childGitEntry, path.Join(entryPath, name))
 			if err != nil {
 				return nil, err
 			}
-			entries[i] = childEntry
-			i++
+			entriesByName[name] = childEntry
 		}
 	}
 	entry, err = NewEntryInode(
 		in,
 		entryPath,
 		gitEntry,
-		entries,
+		entriesByName,
 	)
 	return
 }
