@@ -5,31 +5,38 @@ import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
 	"gitreefs/git"
-	"sort"
 )
 
 type EntryInode struct {
 	Inode
-	id            fuseops.InodeID
-	size          int64
-	isDir         bool
-	entriesByName map[string]*EntryInode
-	path          string
-	commitish     *CommitishInode
+	id               fuseops.InodeID
+	size             int64
+	isDir            bool
+	entries          []*EntryInode
+	entryNameToIndex map[string]int
+	path             string
+	commitish        *CommitishInode
 }
 
-func NewEntryInode(commitish *CommitishInode, path string, gitEntry *git.Entry, entriesByName map[string]*EntryInode) (inode *EntryInode, err error) {
+func NewEntryInode(
+	commitish *CommitishInode,
+	path string,
+	gitEntry *git.Entry,
+	entries []*EntryInode,
+	entryNameToIndex map[string]int,
+) (inode *EntryInode, err error) {
 	if gitEntry.IsDir {
 		// directory paths aren't used hence aren't saved
 		path = ""
 	}
 	return &EntryInode{
-		id:            NextInodeID(),
-		commitish:     commitish,
-		size:          gitEntry.Size,
-		isDir:         gitEntry.IsDir,
-		entriesByName: entriesByName,
-		path:          path,
+		id:               NextInodeID(),
+		commitish:        commitish,
+		size:             gitEntry.Size,
+		isDir:            gitEntry.IsDir,
+		entries:          entries,
+		entryNameToIndex: entryNameToIndex,
+		path:             path,
 	}, nil
 }
 
@@ -45,28 +52,20 @@ func (in *EntryInode) Attributes() fuseops.InodeAttributes {
 }
 
 func (in *EntryInode) GetOrAddChild(name string) (child Inode, err error) {
-	childEntry, found := in.entriesByName[name]
+	childIndex, found := in.entryNameToIndex[name]
 	if !found {
 		return nil, fmt.Errorf("no child with name %v for %v", name, in)
 	}
-	return childEntry, err
+	return in.entries[childIndex], err
 }
 
 func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
 	if !in.isDir {
 		return in.Inode.ListChildren()
 	}
-	names := make([]string, len(in.entriesByName))
-	i := 0
-	for name, _ := range in.entriesByName {
-		names[i] = name
-		i++
-	}
-	sort.Strings(names)
-	children = make([]*fuseutil.Dirent, len(in.entriesByName))
-	for i := 0; i < len(names); i++ {
-		name := names[i]
-		childEntry := in.entriesByName[name]
+	children = make([]*fuseutil.Dirent, len(in.entries))
+	for name, i := range in.entryNameToIndex {
+		childEntry := in.entries[i]
 		var childType fuseutil.DirentType
 		if childEntry.isDir {
 			childType = fuseutil.DT_Directory

@@ -78,7 +78,7 @@ func run(ctx *cli.Context) error {
 
 	var mountedFs *fuse.MountedFileSystem
 	{
-		mountedFs, err = mountFs(opts)
+		mountedFs, err = mountFs(opts, false)
 
 		if err == nil {
 			logger.Info("File system has been successfully mounted.")
@@ -102,7 +102,18 @@ func run(ctx *cli.Context) error {
 	return nil
 }
 
-func mountFs(opts *options.Options) (mountedFs *fuse.MountedFileSystem, err error) {
+func unmount(mountPoint string) error {
+	err := fuse.Unmount(mountPoint)
+	if err != nil {
+		logger.Error("Failed to unmount in response to SIGINT: %w", err)
+		return err
+	} else {
+		logger.Info("Successfully unmounted in response to SIGINT.")
+	}
+	return nil
+}
+
+func mountFs(opts *options.Options, isRetry bool) (mountedFs *fuse.MountedFileSystem, err error) {
 
 	fuseServer, err := fs.NewFsServer(opts.ClonesPath)
 	if err != nil {
@@ -118,11 +129,18 @@ func mountFs(opts *options.Options) (mountedFs *fuse.MountedFileSystem, err erro
 	}
 
 	mountedFs, err = fuse.Mount(opts.MountPoint, fuseServer, mountCfg)
-	if err != nil {
-		return nil, fmt.Errorf("fuse.Mount: %w", err)
+	if err == nil {
+		return
 	}
 
-	return
+	if !isRetry {
+		unmountErr := unmount(opts.MountPoint)
+		if unmountErr == nil {
+			return mountFs(opts, true)
+		}
+		logger.Error("Failed to unmount at %v after failing to mount: %v")
+	}
+	return nil, fmt.Errorf("fuse.Mount failed: %w", err)
 }
 
 func registerSignalHandler(mountPoint string) {
@@ -132,13 +150,9 @@ func registerSignalHandler(mountPoint string) {
 		for {
 			<-signalChan
 			logger.Info("Received SIGINT, attempting to unmount...")
-
-			err := fuse.Unmount(mountPoint)
+			err := unmount(mountPoint)
 			if err != nil {
-				logger.Error("Failed to unmount in response to SIGINT: %w", err)
-			} else {
-				logger.Info("Successfully unmounted in response to SIGINT.")
-				return
+				logger.Error("Failed to unmount: %w", err)
 			}
 		}
 	}()
