@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -27,16 +28,16 @@ var (
 )
 
 func InitLoggers(filePathFormat string, level string) error {
-	var filePath = fmt.Sprintf(filePathFormat, time.Now().UTC().Format("yyyy-MMM-dd"))
-	var filePermissions os.FileMode = 0644
+	var filePath = fmt.Sprintf(filePathFormat, time.Now().UTC().Format("2006-01-02"))
+	var filePermissions os.FileMode = 0777
 	err := os.Mkdir(filepath.Dir(filePath), filePermissions)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "file exists") {
 		return err
 	}
 
 	file, err := os.OpenFile(
 		filePath,
-		os.O_WRONLY|os.O_CREATE|os.O_APPEND,
+		os.O_CREATE|os.O_APPEND|os.O_RDWR,
 		filePermissions,
 	)
 	if err != nil {
@@ -46,7 +47,7 @@ func InitLoggers(filePathFormat string, level string) error {
 	File = file
 	GlobalLevel = stringToLevel(level)
 
-	var flag = log.Ldate | log.Ltime | log.Lmicroseconds
+	flag := log.Ldate | log.Ltime | log.Lmicroseconds
 	DebugLogger = log.New(createLogger(LogLevelDebug), "DEBUG: ", flag)
 	InfoLogger = log.New(createLogger(LogLevelInfo), "INFO: ", flag)
 	ErrorLogger = log.New(createLogger(LogLevelError), "ERROR: ", flag)
@@ -103,23 +104,23 @@ func CloseLoggers() {
 	}
 }
 
-func Debug(v ...interface{}) {
+func Debug(format string, v ...interface{}) {
 	if GlobalLevel > LogLevelDebug {
 		return
 	}
-	DebugLogger.Println(v...)
+	DebugLogger.Printf(format+"\n", v...)
 }
 
-func Info(v ...interface{}) {
+func Info(format string, v ...interface{}) {
 	if GlobalLevel > LogLevelInfo {
 		return
 	}
-	InfoLogger.Println(v...)
+	InfoLogger.Printf(format+"\n", v...)
 }
 
-func Error(v ...interface{}) {
+func Error(format string, v ...interface{}) {
 	if GlobalLevel > LogLevelError {
 		return
 	}
-	ErrorLogger.Println(v...)
+	ErrorLogger.Printf(format+"\n", v...)
 }

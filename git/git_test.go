@@ -2,6 +2,7 @@ package git
 
 import (
 	"github.com/stretchr/testify/suite"
+	"gitreefs/logger"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,6 +18,7 @@ type gitTestSuite struct {
 }
 
 func TestGitTestSuite(t *testing.T) {
+	logger.InitLoggers("logs/git_test-%v.log", "ERROR")
 	suite.Run(t, new(gitTestSuite))
 }
 
