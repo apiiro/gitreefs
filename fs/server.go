@@ -4,7 +4,6 @@ import (
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
-	"gitreefs/fs/inode"
 	"gitreefs/logger"
 	"golang.org/x/net/context"
 )
@@ -12,18 +11,18 @@ import (
 type fuseFs struct {
 	fuseutil.NotImplementedFileSystem
 	clonesPath string
-	inodes     map[fuseops.InodeID]*fs.Inode
+	inodes     map[fuseops.InodeID]*Inode
 }
 
 func NewFsServer(clonesPath string) (server fuse.Server, err error) {
-	var rootInode *fs.RootInode
-	rootInode, err = fs.NewRootInode(clonesPath)
+	var rootInode *RootInode
+	rootInode, err = NewRootInode(clonesPath)
 	if err != nil {
 		return
 	}
 	server = fuseutil.NewFileSystemServer(&fuseFs{
 		clonesPath: clonesPath,
-		inodes: map[fuseops.InodeID]*fs.Inode{
+		inodes: map[fuseops.InodeID]*Inode{
 			rootInode.Id: &rootInode.Inode,
 		},
 	})
@@ -36,7 +35,7 @@ func (fs *fuseFs) StatFS(
 	return nil
 }
 
-func (fs *fuseFs) lookUpInode(parentId fuseops.InodeID, name string) (inode *fs.Inode, err error) {
+func (fs *fuseFs) lookUpInode(parentId fuseops.InodeID, name string) (inode *Inode, err error) {
 	parent, found := fs.inodes[parentId]
 	if !found {
 		return nil, nil

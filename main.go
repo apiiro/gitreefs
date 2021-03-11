@@ -9,13 +9,14 @@ import (
 	"github.com/urfave/cli"
 	"gitreefs/fs"
 	"gitreefs/logger"
+	"gitreefs/options"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-func main() {
-	app := Init()
+func Main() {
+	app := options.Init()
 
 	var err error
 	app.Action = func(context *cli.Context) {
@@ -58,7 +59,7 @@ func dispatchDaemon() error {
 func run(ctx *cli.Context) error {
 	var err error
 
-	var opts = ParseOptions(ctx, err)
+	var opts = options.ParseOptions(ctx, err)
 	if err != nil {
 		return fmt.Errorf("parsing options: %w", err)
 	}
@@ -100,7 +101,7 @@ func run(ctx *cli.Context) error {
 	return nil
 }
 
-func mountFs(opts *options) (mountedFs *fuse.MountedFileSystem, err error) {
+func mountFs(opts *options.Options) (mountedFs *fuse.MountedFileSystem, err error) {
 
 	fuseServer, err := fs.NewFsServer(opts.ClonesPath)
 	if err != nil {

@@ -1,4 +1,4 @@
-package gitreefs
+package options
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ func init() {
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} {{if .Flags}}[global options]{{end}} clones mountpoint
+   {{.Name}} {{if .Flags}}[global Options]{{end}} clones mountpoint
 GLOBAL OPTIONS:
    {{range .Flags}}{{.}}
    {{end}}{{end}}
@@ -51,7 +51,7 @@ func Init() (app *cli.App) {
 	return
 }
 
-type options struct {
+type Options struct {
 	Foreground bool
 	LogFile    string
 	LogLevel   string
@@ -59,7 +59,7 @@ type options struct {
 	MountPoint string
 }
 
-func ParseOptions(c *cli.Context, err error) (opts *options) {
+func ParseOptions(c *cli.Context, err error) (opts *Options) {
 	var clonesPath, mountPoint string
 	switch len(c.Args()) {
 
@@ -88,7 +88,7 @@ func ParseOptions(c *cli.Context, err error) (opts *options) {
 		return
 	}
 
-	opts = &options{
+	opts = &Options{
 		Foreground: c.Bool("foreground"),
 		LogFile:    c.String("log-file"),
 		LogLevel:   c.String("log-level"),

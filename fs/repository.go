@@ -2,7 +2,6 @@ package fs
 
 import (
 	"github.com/jacobsa/fuse/fuseops"
-	"gitreefs/fs"
 	"gitreefs/git"
 	"gitreefs/logger"
 	"path"
@@ -19,7 +18,7 @@ type RepositoryInode struct {
 
 func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode, err error) {
 	clonePath := path.Join(clonesPath, name)
-	err = fs.ValidateDirectory(clonePath)
+	err = ValidateDirectory(clonePath)
 	if err != nil {
 		return
 	}

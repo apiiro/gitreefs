@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
-	"gitreefs/fs"
 	"gitreefs/git"
 	"sort"
 )
@@ -41,9 +40,9 @@ func NewEntryInode(commitish *CommitishInode, path string, gitEntry *git.Entry, 
 }
 func (in *EntryInode) Attributes() fuseops.InodeAttributes {
 	if in.isDir {
-		return fs.DirAttributes()
+		return DirAttributes()
 	}
-	return fs.FileAttributes(in.size)
+	return FileAttributes(in.size)
 }
 
 func (in *EntryInode) GetOrAddChild(name string) (child *Inode, err error) {

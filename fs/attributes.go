@@ -7,8 +7,8 @@ import (
 )
 
 var (
-	uid uint32 = uint32(os.Getuid())
-	gid uint32 = uint32(os.Getgid())
+	uid = uint32(os.Getuid())
+	gid = uint32(os.Getgid())
 )
 
 func FileAttributes(size int64) fuseops.InodeAttributes {

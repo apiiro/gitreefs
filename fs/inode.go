@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
-	"gitreefs/fs"
 	"reflect"
 	"sync"
 )
@@ -37,7 +36,7 @@ type Inode struct {
 
 func (in *Inode) Attributes() fuseops.InodeAttributes {
 	// default implementation
-	return fs.DirAttributes()
+	return DirAttributes()
 }
 
 func (in *Inode) ListChildren() ([]*fuseutil.Dirent, error) {
