@@ -49,11 +49,11 @@ func run(ctx *cli.Context) error {
 		return fmt.Errorf("init log file: %w", err)
 	}
 
-	logger.Info("Using mountFs: %v --> %v", opts.ClonesPath, opts.MountPoint)
+	logger.Info("Mounting: %v --> %v", opts.ClonesPath, opts.MountPoint)
 
 	var mountedFs *fuse.MountedFileSystem
 	{
-		mountedFs, err = mountFs(opts, false)
+		mountedFs, err = fs.Mount(opts.ClonesPath, opts.MountPoint, false)
 
 		if err == nil {
 			logger.Info("fileHandler system has been successfully mounted.")
@@ -75,47 +75,6 @@ func run(ctx *cli.Context) error {
 	return nil
 }
 
-func unmount(mountPoint string) error {
-	err := fuse.Unmount(mountPoint)
-	if err != nil {
-		logger.Error("Failed to unmount in response to SIGINT: %v", err)
-		return err
-	} else {
-		logger.Info("Successfully unmounted in response to SIGINT.")
-	}
-	return nil
-}
-
-func mountFs(opts *Options, isRetry bool) (mountedFs *fuse.MountedFileSystem, err error) {
-
-	fuseServer, err := fs.NewFsServer(opts.ClonesPath)
-	if err != nil {
-		return nil, fmt.Errorf("fs_server.NewFsServer: %w", err)
-	}
-
-	mountCfg := &fuse.MountConfig{
-		FSName:      "gitree",
-		VolumeName:  "gitreefs",
-		ReadOnly:    true,
-		DebugLogger: logger.DebugLogger,
-		ErrorLogger: logger.ErrorLogger,
-	}
-
-	mountedFs, err = fuse.Mount(opts.MountPoint, fuseServer, mountCfg)
-	if err == nil {
-		return
-	}
-
-	if !isRetry {
-		unmountErr := unmount(opts.MountPoint)
-		if unmountErr == nil {
-			return mountFs(opts, true)
-		}
-		logger.Error("Failed to unmount at %v after failing to mount: %v")
-	}
-	return nil, fmt.Errorf("fuse.Mount failed: %w", err)
-}
-
 func registerSignalHandler(mountPoint string) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
@@ -123,7 +82,7 @@ func registerSignalHandler(mountPoint string) {
 		for {
 			<-signalChan
 			logger.Info("Received SIGINT, attempting to unmount...")
-			err := unmount(mountPoint)
+			err := fs.Unmount(mountPoint)
 			if err != nil {
 				logger.Error("Failed to unmount: %v", err)
 			}
