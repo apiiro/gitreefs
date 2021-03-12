@@ -2,7 +2,6 @@ package git
 
 import (
 	"github.com/stretchr/testify/suite"
-	"gitreefs"
 	"gitreefs/logger"
 	"io/ioutil"
 	"os"
@@ -19,7 +18,7 @@ type gitTestSuite struct {
 }
 
 func TestGitTestSuite(t *testing.T) {
-	logger.InitLoggers("logs/git_test-%v.log", "ERROR")
+	logger.InitLoggers("logs/git_test-%v.log", "ERROR", "")
 	suite.Run(t, new(gitTestSuite))
 }
 
@@ -52,7 +51,7 @@ func (gitSuite *gitTestSuite) TearDownTest() {
 	os.RemoveAll(gitSuite.clonePath)
 }
 
-func countTreeNodes(node *main.Entry) uint {
+func countTreeNodes(node *Entry) uint {
 	var count uint = 1
 	if node.IsDir {
 		for _, child := range node.EntriesByName {
@@ -62,11 +61,11 @@ func countTreeNodes(node *main.Entry) uint {
 	return count
 }
 
-func lookupNode(node *main.Entry, path string) *main.Entry {
+func lookupNode(node *Entry, path string) *Entry {
 	return lookupNodeRecursive(node, strings.Split(path, "/"))
 }
 
-func lookupNodeRecursive(node *main.Entry, pathParts []string) (target *main.Entry) {
+func lookupNodeRecursive(node *Entry, pathParts []string) (target *Entry) {
 	if len(pathParts) == 0 {
 		return node
 	}
