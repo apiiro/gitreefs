@@ -138,7 +138,7 @@ func (fs *fuseFs) ReadFile(
 	}
 
 	contents = contents[op.Offset:]
-	op.BytesRead = copy(op.Dst, contents[op.Offset:])
+	op.BytesRead = copy(op.Dst, contents)
 	return nil
 }
 
