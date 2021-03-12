@@ -20,7 +20,7 @@ type RepositoryInode struct {
 
 func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode, err error) {
 	clonePath := path.Join(clonesPath, name)
-	err = ValidateDirectory(clonePath)
+	err = ValidateDirectory(clonePath, false)
 	if err != nil {
 		return
 	}

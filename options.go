@@ -71,7 +71,7 @@ func ParseOptions(c *cli.Context) (opts *Options, err error) {
 		return
 	}
 
-	err = fs.ValidateDirectory(clonesPath)
+	err = fs.ValidateDirectory(clonesPath, false)
 	if err != nil {
 		return
 	}
@@ -79,6 +79,11 @@ func ParseOptions(c *cli.Context) (opts *Options, err error) {
 	mountPoint, err = filepath.Abs(mountPoint)
 	if err != nil {
 		err = fmt.Errorf("canonicalizing mountFs point: %v", err)
+		return
+	}
+
+	err = fs.ValidateDirectory(mountPoint, true)
+	if err != nil {
 		return
 	}
 

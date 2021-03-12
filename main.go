@@ -44,7 +44,7 @@ func run(ctx *cli.Context) error {
 		return fmt.Errorf("parsing options: %w", err)
 	}
 
-	err = logger.InitLoggers(opts.LogFile, opts.LogLevel)
+	err = logger.InitLoggers(opts.LogFile, opts.LogLevel, Version)
 	if err != nil {
 		return fmt.Errorf("init log file: %w", err)
 	}

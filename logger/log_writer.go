@@ -1,42 +1,33 @@
 package logger
 
 import (
+	"fmt"
 	"io"
+	"time"
 )
 
-type logEntry struct {
-	Name             string `json:"name,omitempty"`
-	LevelName        string `json:"levelname,omitempty"`
-	Severity         string `json:"severity,omitempty"`
-	Message          string `json:"message,omitempty"`
-	TimestampSeconds int64  `json:"timestampSeconds,omitempty"`
-	TimestampNanos   int    `json:"timestampNanos,omitempty"`
-}
-
-type jsonWriter struct {
+type logWriter struct {
+	io.Writer
 	writers []io.Writer
 	level   string
 }
 
-func (f *jsonWriter) Write(message []byte) (bytesWritten int, err error) {
-	//now := time.Now()
-	//entry := logEntry{
-	//	Name:             "root",
-	//	LevelName:        f.level,
-	//	Severity:         f.level,
-	//	Message:          string(message),
-	//	TimestampSeconds: now.Unix(),
-	//	TimestampNanos:   now.Nanosecond(),
-	//}
-	//var buf []byte
-	//buf, err = json.Marshal(entry)
-	//if err != nil {
-	//	return
-	//}
-	//buf = append(buf, '\n')
-	for _, writer := range f.writers {
+func (lw *logWriter) Write(message []byte) (bytesWritten int, err error) {
+	endOfLine := "\n"
+	if message[len(message)-1] == '\n' {
+		endOfLine = ""
+	}
+	formattedMessage := []byte(fmt.Sprintf(
+		"%v [%v] %v gitreefs: %s%s",
+		time.Now().UTC().Format("2006-01-02 15:04:05"),
+		lw.level,
+		appVersion,
+		message,
+		endOfLine,
+	))
+	for _, writer := range lw.writers {
 		if writer != nil {
-			_, err = writer.Write(message)
+			_, err = writer.Write(formattedMessage)
 		}
 	}
 

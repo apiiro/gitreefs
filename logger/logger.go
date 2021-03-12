@@ -25,6 +25,7 @@ var (
 	ErrorLogger *log.Logger
 	fileHandler *os.File
 	globalLevel LogLevel
+	appVersion  = ""
 )
 
 func init() {
@@ -33,12 +34,12 @@ func init() {
 
 func initLoggers() {
 	flag := log.Ldate | log.Ltime | log.Lmicroseconds
-	DebugLogger = log.New(createLogger(LogLevelDebug), "DEBUG: ", flag)
-	InfoLogger = log.New(createLogger(LogLevelInfo), "INFO: ", flag)
-	ErrorLogger = log.New(createLogger(LogLevelError), "ERROR: ", flag)
+	DebugLogger = log.New(createLogger(LogLevelDebug), "", flag)
+	InfoLogger = log.New(createLogger(LogLevelInfo), "", flag)
+	ErrorLogger = log.New(createLogger(LogLevelError), "", flag)
 }
 
-func InitLoggers(filePathFormat string, level string) error {
+func InitLoggers(filePathFormat string, level string, version string) error {
 	var filePath = fmt.Sprintf(filePathFormat, time.Now().UTC().Format("2006-01-02"), os.Getpid())
 	var filePermissions os.FileMode = 0777
 	err := os.Mkdir(filepath.Dir(filePath), filePermissions)
@@ -57,6 +58,7 @@ func InitLoggers(filePathFormat string, level string) error {
 
 	fileHandler = file
 	globalLevel = stringToLevel(level)
+	appVersion = version
 
 	initLoggers()
 
@@ -103,7 +105,7 @@ func createLogger(level LogLevel) io.Writer {
 	if fileHandler != nil {
 		writers = append(writers, fileHandler)
 	}
-	return &jsonWriter{
+	return &logWriter{
 		level:   levelToString(level),
 		writers: writers,
 	}
@@ -120,19 +122,19 @@ func Debug(format string, v ...interface{}) {
 	if globalLevel > LogLevelDebug {
 		return
 	}
-	DebugLogger.Printf(format+"\n", v...)
+	DebugLogger.Printf(format, v...)
 }
 
 func Info(format string, v ...interface{}) {
 	if globalLevel > LogLevelInfo {
 		return
 	}
-	InfoLogger.Printf(format+"\n", v...)
+	InfoLogger.Printf(format, v...)
 }
 
 func Error(format string, v ...interface{}) {
 	if globalLevel > LogLevelError {
 		return
 	}
-	ErrorLogger.Printf(format+"\n", v...)
+	ErrorLogger.Printf(format, v...)
 }
