@@ -6,12 +6,13 @@ import (
 	"github.com/jacobsa/fuse/fuseutil"
 	"gitreefs/logger"
 	"golang.org/x/net/context"
+	"sync"
 )
 
 type fuseFs struct {
 	fuseutil.NotImplementedFileSystem
 	clonesPath string
-	inodes     map[fuseops.InodeID]Inode
+	inodes     *sync.Map
 }
 
 func NewFsServer(clonesPath string) (server fuse.Server, err error) {
@@ -20,11 +21,11 @@ func NewFsServer(clonesPath string) (server fuse.Server, err error) {
 	if err != nil {
 		return
 	}
+	inodes := &sync.Map{}
+	inodes.Store(rootInode.Id(), rootInode)
 	server = fuseutil.NewFileSystemServer(&fuseFs{
 		clonesPath: clonesPath,
-		inodes: map[fuseops.InodeID]Inode{
-			rootInode.Id(): rootInode,
-		},
+		inodes:     inodes,
 	})
 	return
 }
@@ -36,17 +37,15 @@ func (fs *fuseFs) StatFS(
 }
 
 func (fs *fuseFs) lookUpInode(parentId fuseops.InodeID, name string) (inode Inode, err error) {
-	parent, found := fs.inodes[parentId]
+	parent, found := fs.inodes.Load(parentId)
 	if !found {
 		return nil, nil
 	}
-	inode, err = parent.GetOrAddChild(name)
+	inode, err = parent.(Inode).GetOrAddChild(name)
 	if err != nil || inode == nil {
 		return
 	}
-	if _, found = fs.inodes[inode.Id()]; !found {
-		fs.inodes[inode.Id()] = inode
-	}
+	fs.inodes.LoadOrStore(inode.Id(), inode)
 	return
 }
 
@@ -70,11 +69,11 @@ func (fs *fuseFs) LookUpInode(
 func (fs *fuseFs) GetInodeAttributes(
 	ctx context.Context,
 	op *fuseops.GetInodeAttributesOp) error {
-	var inode, found = fs.inodes[op.Inode]
+	var inode, found = fs.inodes.Load(op.Inode)
 	if !found {
 		return fuse.ENOENT
 	}
-	op.Attributes = inode.Attributes()
+	op.Attributes = inode.(Inode).Attributes()
 	return nil
 }
 
@@ -88,11 +87,11 @@ func (fs *fuseFs) OpenDir(
 func (fs *fuseFs) ReadDir(
 	ctx context.Context,
 	op *fuseops.ReadDirOp) error {
-	var inode, found = fs.inodes[op.Inode]
+	var inode, found = fs.inodes.Load(op.Inode)
 	if !found {
 		return fuse.ENOENT
 	}
-	children, err := inode.ListChildren()
+	children, err := inode.(Inode).ListChildren()
 	if err != nil {
 		logger.Error("fuseFs.ReadDir for %v: %v", inode, err)
 		return fuse.EIO
@@ -124,11 +123,11 @@ func (fs *fuseFs) OpenFile(
 func (fs *fuseFs) ReadFile(
 	ctx context.Context,
 	op *fuseops.ReadFileOp) error {
-	var inode, found = fs.inodes[op.Inode]
+	var inode, found = fs.inodes.Load(op.Inode)
 	if !found {
 		return fuse.ENOENT
 	}
-	contents, err := inode.Contents()
+	contents, err := inode.(Inode).Contents()
 	if err != nil {
 		logger.Error("fuseFs.ReadFile for %v: %v", inode, err)
 		return fuse.EIO
@@ -142,3 +141,34 @@ func (fs *fuseFs) ReadFile(
 	op.BytesRead = copy(op.Dst, contents[op.Offset:])
 	return nil
 }
+
+func (fs *fuseFs) ReleaseDirHandle(
+	ctx context.Context,
+	op *fuseops.ReleaseDirHandleOp) error {
+	return nil
+}
+
+func (fs *fuseFs) GetXattr(
+	ctx context.Context,
+	op *fuseops.GetXattrOp) error {
+	return nil
+}
+
+func (fs *fuseFs) ForgetInode(
+	ctx context.Context,
+	op *fuseops.ForgetInodeOp) error {
+	return nil
+}
+
+func (fs *fuseFs) ReleaseFileHandle(
+	ctx context.Context,
+	op *fuseops.ReleaseFileHandleOp) error {
+	return nil
+}
+
+func (fs *fuseFs) FlushFile(
+	ctx context.Context,
+	op *fuseops.FlushFileOp) error {
+	return nil
+}
+

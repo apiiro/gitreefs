@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli"
-	"gitreefs/fs"
+	"gitreefs/util"
 	"os"
 	"path"
 	"path/filepath"
@@ -71,7 +71,7 @@ func ParseOptions(c *cli.Context) (opts *Options, err error) {
 		return
 	}
 
-	err = fs.ValidateDirectory(clonesPath, false)
+	err = util.ValidateDirectory(clonesPath, false)
 	if err != nil {
 		return
 	}
@@ -82,7 +82,7 @@ func ParseOptions(c *cli.Context) (opts *Options, err error) {
 		return
 	}
 
-	err = fs.ValidateDirectory(mountPoint, true)
+	err = util.ValidateDirectory(mountPoint, true)
 	if err != nil {
 		return
 	}

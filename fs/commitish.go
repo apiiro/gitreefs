@@ -20,6 +20,11 @@ type CommitishInode struct {
 }
 
 func NewCommitishInode(parent *RepositoryInode, commitish string) (inode *CommitishInode, err error) {
+	var canResolve bool
+	canResolve, err = parent.provider.CanResolve(commitish)
+	if err != nil || !canResolve {
+		return nil, err
+	}
 	inode = &CommitishInode{
 		id:         NextInodeID(),
 		commitish:  commitish,
@@ -36,7 +41,7 @@ func (in *CommitishInode) Id() fuseops.InodeID {
 }
 
 func (in *CommitishInode) inodeTreeFromGitTree(gitEntry *git.Entry, entryPath string) (entry *EntryInode, err error) {
-	var entries          []*EntryInode = nil
+	var entries []*EntryInode = nil
 	var entryNameToIndex map[string]int = nil
 	if gitEntry.IsDir {
 		entries = make([]*EntryInode, len(gitEntry.EntriesByName))

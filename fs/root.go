@@ -28,7 +28,7 @@ func (in *RootInode) GetOrAddChild(name string) (child Inode, err error) {
 		repository, found = in.repositoriesByName[name]
 		if !found {
 			repository, err = NewRepositoryInode(in.clonesPath, name)
-			if err != nil {
+			if err != nil || repository == nil {
 				in.mutex.Unlock()
 				return
 			}

@@ -20,9 +20,9 @@ const (
 )
 
 var (
-	DebugLogger *log.Logger
-	InfoLogger  *log.Logger
-	ErrorLogger *log.Logger
+	debugLogger *log.Logger
+	infoLogger  *log.Logger
+	errorLogger *log.Logger
 	fileHandler *os.File
 	globalLevel LogLevel
 	appVersion  = ""
@@ -34,9 +34,9 @@ func init() {
 
 func initLoggers() {
 	flag := log.Ldate | log.Ltime | log.Lmicroseconds
-	DebugLogger = log.New(createLogger(LogLevelDebug), "", flag)
-	InfoLogger = log.New(createLogger(LogLevelInfo), "", flag)
-	ErrorLogger = log.New(createLogger(LogLevelError), "", flag)
+	debugLogger = log.New(createLogger(LogLevelDebug), "", flag)
+	infoLogger = log.New(createLogger(LogLevelInfo), "", flag)
+	errorLogger = log.New(createLogger(LogLevelError), "", flag)
 }
 
 func InitLoggers(filePathFormat string, level string, version string) error {
@@ -83,9 +83,9 @@ func stringToLevel(level string) LogLevel {
 	case "DEBUG":
 		return LogLevelDebug
 	case "INFO":
-		return LogLevelDebug
+		return LogLevelInfo
 	case "ERROR":
-		return LogLevelDebug
+		return LogLevelError
 	default:
 		return 0
 	}
@@ -122,19 +122,33 @@ func Debug(format string, v ...interface{}) {
 	if globalLevel > LogLevelDebug {
 		return
 	}
-	DebugLogger.Printf(format, v...)
+	debugLogger.Printf(format, v...)
 }
 
 func Info(format string, v ...interface{}) {
 	if globalLevel > LogLevelInfo {
 		return
 	}
-	InfoLogger.Printf(format, v...)
+	infoLogger.Printf(format, v...)
 }
 
 func Error(format string, v ...interface{}) {
 	if globalLevel > LogLevelError {
 		return
 	}
-	ErrorLogger.Printf(format, v...)
+	errorLogger.Printf(format, v...)
+}
+
+func DebugLogger() *log.Logger {
+	if globalLevel > LogLevelDebug {
+		return nil
+	}
+	return debugLogger
+}
+
+func ErrorLogger() *log.Logger {
+	if globalLevel > LogLevelError {
+		return nil
+	}
+	return errorLogger
 }

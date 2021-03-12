@@ -28,8 +28,8 @@ func Mount(clonesPath string, mountPoint string, isRetry bool) (mountedFs *fuse.
 		FSName:      "gitree",
 		VolumeName:  "gitreefs",
 		ReadOnly:    true,
-		DebugLogger: logger.DebugLogger,
-		ErrorLogger: logger.ErrorLogger,
+		DebugLogger: logger.DebugLogger(),
+		ErrorLogger: logger.ErrorLogger(),
 	}
 
 	mountedFs, err = fuse.Mount(mountPoint, fuseServer, mountCfg)
@@ -42,7 +42,7 @@ func Mount(clonesPath string, mountPoint string, isRetry bool) (mountedFs *fuse.
 		if unmountErr == nil {
 			return Mount(clonesPath, mountPoint, true)
 		}
-		logger.Error("Failed to unmount at %v after failing to mount: %v")
+		logger.Error("Failed to unmount at %v after failing to mount: %v", mountPoint, err)
 	}
 	return nil, fmt.Errorf("fuse.Mount failed: %w", err)
 }

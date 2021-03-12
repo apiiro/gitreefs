@@ -5,6 +5,7 @@ import (
 	"github.com/jacobsa/fuse/fuseutil"
 	"gitreefs/git"
 	"gitreefs/logger"
+	"gitreefs/util"
 	"path"
 	"sync"
 )
@@ -20,14 +21,14 @@ type RepositoryInode struct {
 
 func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode, err error) {
 	clonePath := path.Join(clonesPath, name)
-	err = ValidateDirectory(clonePath, false)
+	err = util.ValidateDirectory(clonePath, false)
 	if err != nil {
 		return
 	}
 	var provider *git.RepositoryProvider
 	provider, err = git.NewRepositoryProvider(clonePath)
-	if err != nil {
-		return
+	if err != nil || provider == nil {
+		return nil, err
 	}
 	inode = &RepositoryInode{
 		id:              NextInodeID(),
@@ -51,7 +52,7 @@ func (in *RepositoryInode) GetOrAddChild(name string) (child Inode, err error) {
 		commitish, found = in.commitishByName[name]
 		if !found {
 			commitish, err = NewCommitishInode(in, name)
-			if err != nil {
+			if err != nil || commitish == nil {
 				in.mutex.Unlock()
 				return
 			}

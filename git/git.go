@@ -6,6 +6,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"gitreefs/logger"
+	"gitreefs/util"
 )
 
 const (
@@ -21,6 +22,11 @@ type RepositoryProvider struct {
 }
 
 func NewRepositoryProvider(clonePath string) (provider *RepositoryProvider, err error) {
+	validateErr := util.ValidateDirectory(clonePath, false)
+	if validateErr != nil {
+		logger.Info("clone at %v doesn't exist", clonePath)
+		return nil, nil
+	}
 	provider = &RepositoryProvider{
 		shortShaMapping: make(map[string]string),
 	}
@@ -58,10 +64,21 @@ func (provider *RepositoryProvider) getCommit(commitish string) (commit *object.
 	var hash *plumbing.Hash
 	hash, err = provider.repository.ResolveRevision(plumbing.Revision(commitish))
 	if err != nil {
-		return
+		logger.Info("commitish %v could not be resolved: %v", commitish, err)
+		return nil, nil
 	}
 
 	commit, err = provider.repository.CommitObject(*hash)
+	return
+}
+
+func (provider *RepositoryProvider) CanResolve(commitish string) (canResolve bool, err error) {
+	var commit *object.Commit
+	commit, err = provider.getCommit(commitish)
+	if err != nil {
+		return false, err
+	}
+	canResolve = commit != nil
 	return
 }
 
@@ -71,6 +88,9 @@ func (provider *RepositoryProvider) ListTree(commitish string) (root *RootEntry,
 	commit, err = provider.getCommit(commitish)
 	if err != nil {
 		return
+	}
+	if commit == nil {
+		return nil, fmt.Errorf("%v not found", commitish)
 	}
 
 	var tree *object.Tree
@@ -113,6 +133,9 @@ func (provider *RepositoryProvider) FileContents(commitish string, filePath stri
 	commit, err = provider.getCommit(commitish)
 	if err != nil {
 		return
+	}
+	if commit == nil {
+		return "", fmt.Errorf("%v not found", commitish)
 	}
 
 	var file *object.File
