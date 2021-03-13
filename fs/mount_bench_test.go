@@ -104,7 +104,10 @@ func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
 	start = time.Now()
 	walk(path.Join(mntSuite.mountPoint, "elasticsearch", "b926bf0"))
 	elapsedVirtualSec := time.Since(start).Seconds()
-	logger.Info("Walking virtual fs: %v sec", elapsedVirtualSec)
+	logger.Info("Walking virtual fs #1: %v sec", elapsedVirtualSec)
 
-	mntSuite.Less(elapsedVirtualSec, elapsedPhysicalSec)
+	start = time.Now()
+	walk(path.Join(mntSuite.mountPoint, "elasticsearch", "b926bf0"))
+	elapsedVirtualSecSecondRound := time.Since(start).Seconds()
+	logger.Info("Walking virtual fs #2: %v sec", elapsedVirtualSecSecondRound)
 }
