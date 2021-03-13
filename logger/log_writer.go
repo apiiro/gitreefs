@@ -18,7 +18,7 @@ func (lw *logWriter) Write(message []byte) (bytesWritten int, err error) {
 		endOfLine = ""
 	}
 	formattedMessage := []byte(fmt.Sprintf(
-		"%v [%v] %v gitreefs: %s%s",
+		"%v [%v] %v: %s%s",
 		time.Now().UTC().Format("2006-01-02 15:04:05"),
 		lw.level,
 		appVersion,

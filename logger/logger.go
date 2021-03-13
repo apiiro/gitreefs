@@ -25,7 +25,7 @@ var (
 	errorLogger *log.Logger
 	fileHandler *os.File
 	globalLevel LogLevel
-	appVersion  = ""
+	appVersion  = "-"
 )
 
 func init() {
@@ -33,7 +33,7 @@ func init() {
 }
 
 func initLoggers() {
-	flag := log.Ldate | log.Ltime | log.Lmicroseconds
+	flag := log.Lshortfile
 	debugLogger = log.New(createLogger(LogLevelDebug), "", flag)
 	infoLogger = log.New(createLogger(LogLevelInfo), "", flag)
 	errorLogger = log.New(createLogger(LogLevelError), "", flag)
