@@ -3,20 +3,16 @@ package fs
 import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
-	"sync"
+	"sync/atomic"
 )
 
 var (
-	nextInodeIDMutex                 = sync.Mutex{}
-	nextInodeID      fuseops.InodeID = fuseops.RootInodeID + 1
+	allocatedInodeId uint64 = fuseops.RootInodeID
 )
 
 func NextInodeID() (next fuseops.InodeID) {
-	nextInodeIDMutex.Lock()
-	next = nextInodeID
-	nextInodeID++
-	nextInodeIDMutex.Unlock()
-	return
+	nextInodeId := atomic.AddUint64(&allocatedInodeId, 1)
+	return fuseops.InodeID(nextInodeId)
 }
 
 type Inode interface {

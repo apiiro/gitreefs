@@ -5,6 +5,7 @@ import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
 	"gitreefs/git"
+	"sync"
 )
 
 type EntryInode struct {
@@ -13,7 +14,7 @@ type EntryInode struct {
 	size             int64
 	isDir            bool
 	entries          []*EntryInode
-	entryNameToIndex map[string]int
+	entryNameToIndex *sync.Map
 	path             string
 	commitish        *CommitishInode
 }
@@ -23,7 +24,7 @@ func NewEntryInode(
 	path string,
 	gitEntry *git.Entry,
 	entries []*EntryInode,
-	entryNameToIndex map[string]int,
+	entryNameToIndex *sync.Map,
 ) (inode *EntryInode, err error) {
 	if gitEntry.IsDir {
 		// directory paths aren't used hence aren't saved
@@ -52,11 +53,11 @@ func (in *EntryInode) Attributes() fuseops.InodeAttributes {
 }
 
 func (in *EntryInode) GetOrAddChild(name string) (child Inode, err error) {
-	childIndex, found := in.entryNameToIndex[name]
+	childIndex, found := in.entryNameToIndex.Load(name)
 	if !found {
 		return nil, fmt.Errorf("no child with name %v for %v", name, in)
 	}
-	return in.entries[childIndex], err
+	return in.entries[childIndex.(int)], err
 }
 
 func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
@@ -64,21 +65,23 @@ func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
 		return in.Inode.ListChildren()
 	}
 	children = make([]*fuseutil.Dirent, len(in.entries))
-	for name, i := range in.entryNameToIndex {
-		childEntry := in.entries[i]
+	in.entryNameToIndex.Range(func(name, i interface{}) bool {
+		index := i.(int)
+		childEntry := in.entries[index]
 		var childType fuseutil.DirentType
 		if childEntry.isDir {
 			childType = fuseutil.DT_Directory
 		} else {
 			childType = fuseutil.DT_File
 		}
-		children[i] = &fuseutil.Dirent{
-			Offset: fuseops.DirOffset(i + 1),
+		children[index] = &fuseutil.Dirent{
+			Offset: fuseops.DirOffset(index + 1),
 			Inode:  childEntry.id,
-			Name:   name,
+			Name:   name.(string),
 			Type:   childType,
 		}
-	}
+		return true
+	})
 	return
 }
 

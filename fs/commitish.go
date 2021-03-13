@@ -42,10 +42,10 @@ func (in *CommitishInode) Id() fuseops.InodeID {
 
 func (in *CommitishInode) inodeTreeFromGitTree(gitEntry *git.Entry, entryPath string) (entry *EntryInode, err error) {
 	var entries []*EntryInode = nil
-	var entryNameToIndex map[string]int = nil
+	var entryNameToIndex *sync.Map = nil
 	if gitEntry.IsDir {
 		entries = make([]*EntryInode, len(gitEntry.EntriesByName))
-		entryNameToIndex = make(map[string]int)
+		entryNameToIndex = &sync.Map{}
 		i := 0
 		for name, childGitEntry := range gitEntry.EntriesByName {
 			var childEntry *EntryInode
@@ -54,7 +54,7 @@ func (in *CommitishInode) inodeTreeFromGitTree(gitEntry *git.Entry, entryPath st
 				return nil, err
 			}
 			entries[i] = childEntry
-			entryNameToIndex[name] = i
+			entryNameToIndex.Store(name, i)
 			i++
 		}
 	}
@@ -69,24 +69,19 @@ func (in *CommitishInode) inodeTreeFromGitTree(gitEntry *git.Entry, entryPath st
 }
 
 func (in *CommitishInode) fetchContentIfNeeded() (err error) {
+	in.mutex.Lock()
 	if !in.isFetched {
-		in.mutex.Lock()
-		if !in.isFetched {
-			root, err := in.repository.provider.ListTree(in.commitish)
-			if err != nil {
-				in.mutex.Unlock()
-				return err
-			}
+		var root *git.RootEntry
+		root, err = in.repository.provider.ListTree(in.commitish)
+		if err == nil {
 			in.rootEntry, err = in.inodeTreeFromGitTree(&root.Entry, "")
-			if err != nil {
-				in.mutex.Unlock()
-				return err
+			if err == nil {
+				in.isFetched = true
 			}
-			in.isFetched = true
 		}
-		in.mutex.Unlock()
 	}
-	return nil
+	in.mutex.Unlock()
+	return
 }
 
 func (in *CommitishInode) GetOrAddChild(name string) (child Inode, err error) {

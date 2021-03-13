@@ -3,41 +3,39 @@ package fs
 import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
+	cmap "github.com/orcaman/concurrent-map"
 	"sync"
 )
 
 type RootInode struct {
 	Inode
 	clonesPath         string
-	repositoriesByName map[string]*RepositoryInode
+	repositoriesByName cmap.ConcurrentMap
 	mutex              *sync.Mutex
 }
 
 func NewRootInode(clonesPath string) (root *RootInode, err error) {
 	return &RootInode{
 		clonesPath:         clonesPath,
-		repositoriesByName: make(map[string]*RepositoryInode),
+		repositoriesByName: cmap.New(),
 		mutex:              &sync.Mutex{},
 	}, nil
 }
 
 func (in *RootInode) GetOrAddChild(name string) (child Inode, err error) {
-	repository, found := in.repositoriesByName[name]
-	if !found {
-		in.mutex.Lock()
-		repository, found = in.repositoriesByName[name]
-		if !found {
-			repository, err = NewRepositoryInode(in.clonesPath, name)
-			if err != nil || repository == nil {
-				in.mutex.Unlock()
-				return
+	wrapped :=
+		in.repositoriesByName.Upsert(name, nil, func(found bool, existingValue interface{}, _ interface{}) interface{} {
+			if found && existingValue != nil && existingValue.(*RepositoryInode) != nil {
+				return existingValue
 			}
-			in.repositoriesByName[name] = repository
-		}
-		in.mutex.Unlock()
+			var repository *RepositoryInode
+			repository, err = NewRepositoryInode(in.clonesPath, name)
+			return repository
+		})
+	if wrapped.(*RepositoryInode) == nil {
+		return nil, err
 	}
-	child = repository
-	return
+	return wrapped.(*RepositoryInode), err
 }
 
 func (in *RootInode) Id() fuseops.InodeID {

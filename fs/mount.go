@@ -9,11 +9,10 @@ import (
 func Unmount(mountPoint string) error {
 	err := fuse.Unmount(mountPoint)
 	if err != nil {
-		logger.Error("Failed to unmount in response to SIGINT: %v", err)
+		logger.Error("Failed to unmount at %v: %v", mountPoint, err)
 		return err
-	} else {
-		logger.Info("Successfully unmounted in response to SIGINT.")
 	}
+	logger.Info("Successfully unmounted at %v", mountPoint)
 	return nil
 }
 

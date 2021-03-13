@@ -64,7 +64,7 @@ func (provider *RepositoryProvider) getCommit(commitish string) (commit *object.
 	var hash *plumbing.Hash
 	hash, err = provider.repository.ResolveRevision(plumbing.Revision(commitish))
 	if err != nil {
-		logger.Info("commitish %v could not be resolved: %v", commitish, err)
+		logger.Info("commitish '%v' could not be resolved: %v", commitish, err)
 		return nil, nil
 	}
 

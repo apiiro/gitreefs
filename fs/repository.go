@@ -3,11 +3,11 @@ package fs
 import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
+	"github.com/orcaman/concurrent-map"
 	"gitreefs/git"
 	"gitreefs/logger"
 	"gitreefs/util"
 	"path"
-	"sync"
 )
 
 type RepositoryInode struct {
@@ -15,8 +15,7 @@ type RepositoryInode struct {
 	id              fuseops.InodeID
 	clonePath       string
 	provider        *git.RepositoryProvider
-	commitishByName map[string]*CommitishInode
-	mutex           *sync.Mutex
+	commitishByName cmap.ConcurrentMap
 }
 
 func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode, err error) {
@@ -34,8 +33,7 @@ func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode,
 		id:              NextInodeID(),
 		provider:        provider,
 		clonePath:       clonePath,
-		commitishByName: map[string]*CommitishInode{},
-		mutex:           &sync.Mutex{},
+		commitishByName: cmap.New(),
 	}
 	logger.Debug("NewRepositoryInode: %v", inode.clonePath)
 	return
@@ -46,22 +44,19 @@ func (in *RepositoryInode) Id() fuseops.InodeID {
 }
 
 func (in *RepositoryInode) GetOrAddChild(name string) (child Inode, err error) {
-	commitish, found := in.commitishByName[name]
-	if !found {
-		in.mutex.Lock()
-		commitish, found = in.commitishByName[name]
-		if !found {
-			commitish, err = NewCommitishInode(in, name)
-			if err != nil || commitish == nil {
-				in.mutex.Unlock()
-				return
+	wrapped :=
+		in.commitishByName.Upsert(name, nil, func(found bool, existingValue interface{}, _ interface{}) interface{} {
+			if found && existingValue != nil && existingValue.(*CommitishInode) != nil {
+				return existingValue
 			}
-			in.commitishByName[name] = commitish
-		}
-		in.mutex.Unlock()
+			var commitish *CommitishInode
+			commitish, err = NewCommitishInode(in, name)
+			return commitish
+		})
+	if wrapped.(*CommitishInode) == nil {
+		return nil, err
 	}
-	child = commitish
-	return
+	return wrapped.(*CommitishInode), err
 }
 
 func (in *RepositoryInode) ListChildren() ([]*fuseutil.Dirent, error) {
