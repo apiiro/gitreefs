@@ -12,75 +12,83 @@ import (
 	"time"
 )
 
+//const (
+//	REMOTE    = "https://github.com/apiirolab/elasticsearch.git"
+//	REPO_NAME = "elasticsearch"
+//	COMMIT    = "b926bf0"
+//)
+const (
+	REMOTE    = "https://github.com/apiirolab/EVO-Exchange-BE-2019"
+	REPO_NAME = "EVO-Exchange-BE-2019"
+	COMMIT    = "c47980a"
+)
+
 type mountBenchmarkTestSuite struct {
 	suite.Suite
 	clonesPath string
-	mountPoint string
+	clonePath  string
 }
 
 func TestMountBenchmarkTestSuite(t *testing.T) {
-	logger.InitLoggers("logs/mount_bench_test-%v.log", "INFO", "-")
 	suite.Run(t, new(mountBenchmarkTestSuite))
 }
 
 func (mntSuite *mountBenchmarkTestSuite) SetupTest() {
+	logger.InitLoggers("logs/mount_bench_test-%v.log", "INFO", "-")
+
 	var err error
 	mntSuite.clonesPath, err = ioutil.TempDir("", "")
 	if err != nil {
 		panic(err)
 	}
-	mntSuite.mountPoint, err = ioutil.TempDir("", "")
-	if err != nil {
-		panic(err)
-	}
 
-	var gitExecutable string
-	gitExecutable, err = exec.LookPath("git")
-	if err != nil {
-		panic(err)
-	}
 	logger.Info("Cloning...")
-	cloneCmd := &exec.Cmd{
-		Path: gitExecutable,
-		Args: []string{"git", "clone", "https://github.com/apiirolab/elasticsearch.git"},
-		Dir:  mntSuite.clonesPath,
-	}
-	err = cloneCmd.Start()
-	if err != nil {
-		panic(err)
-	}
-	err = cloneCmd.Wait()
-	if err != nil {
-		panic(err)
-	}
+	execCommand(mntSuite.clonesPath, []string{"git", "clone", REMOTE})
+	mntSuite.clonePath = path.Join(mntSuite.clonesPath, REPO_NAME)
+}
 
-	logger.Info("Checking out b926bf0")
-	cloneCmd = &exec.Cmd{
-		Path: gitExecutable,
-		Args: []string{"git", "checkout", "b926bf0"},
-		Dir:  path.Join(mntSuite.clonesPath, "elasticsearch"),
-	}
-	err = cloneCmd.Start()
-	if err != nil {
-		panic(err)
-	}
-	err = cloneCmd.Wait()
-	if err != nil {
-		panic(err)
-	}
+func (mntSuite *mountBenchmarkTestSuite) TearDownTest() {
+	os.RemoveAll(mntSuite.clonesPath)
+}
 
-	logger.Info("Mounting")
-	_, err = Mount(mntSuite.clonesPath, mntSuite.mountPoint, false)
+func execCommand(workingDirectory string, args []string) {
+	executablePath, err := exec.LookPath(args[0])
+	if err != nil {
+		panic(err)
+	}
+	cmd := &exec.Cmd{
+		Path: executablePath,
+		Args: args,
+		Dir:  workingDirectory,
+	}
+	err = cmd.Start()
+	if err != nil {
+		panic(err)
+	}
+	err = cmd.Wait()
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (mntSuite *mountBenchmarkTestSuite) TearDownTest() {
-	logger.Info("Unmounting")
-	unmountErr := Unmount(mntSuite.mountPoint)
-	os.RemoveAll(mntSuite.mountPoint)
-	os.RemoveAll(mntSuite.clonesPath)
+func (mntSuite *mountBenchmarkTestSuite) mount() (mountPoint string) {
+	mountPoint, err := ioutil.TempDir("", "")
+	if err != nil {
+		panic(err)
+	}
+
+	logger.Info("Mounting at %v", mountPoint)
+	_, err = Mount(mntSuite.clonesPath, mountPoint, false)
+	if err != nil {
+		panic(err)
+	}
+	return mountPoint
+}
+
+func (mntSuite *mountBenchmarkTestSuite) unmount(mountPoint string) {
+	logger.Info("Unmounting at %v", mountPoint)
+	unmountErr := Unmount(mountPoint)
+	os.RemoveAll(mountPoint)
 	if unmountErr != nil {
 		panic(unmountErr)
 	}
@@ -95,21 +103,110 @@ func walk(atPath string, readFile bool) {
 	})
 }
 
-func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
-	readFile := false
+type Op func()
 
+func timed(op Op) (elapsedSeconds float64) {
 	start := time.Now()
-	walk(path.Join(mntSuite.clonesPath, "elasticsearch"), readFile)
-	elapsedPhysicalSec := time.Since(start).Seconds()
-	logger.Info("Walking physical fs: %v sec", elapsedPhysicalSec)
+	op()
+	return time.Since(start).Seconds()
+}
 
-	start = time.Now()
-	walk(path.Join(mntSuite.mountPoint, "elasticsearch", "b926bf0"), readFile)
-	elapsedVirtualSec := time.Since(start).Seconds()
-	logger.Info("Walking virtual fs #1: %v sec", elapsedVirtualSec)
+type op struct {
+	description string
+	seconds     float64
+}
 
-	start = time.Now()
-	walk(path.Join(mntSuite.mountPoint, "elasticsearch", "b926bf0"), readFile)
-	elapsedVirtualSecSecondRound := time.Since(start).Seconds()
-	logger.Info("Walking virtual fs #2: %v sec", elapsedVirtualSecSecondRound)
+func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
+
+	var times []op
+
+	logger.Info("Checking out %v", COMMIT)
+
+	times = append(times, op{
+		description: "git checkout",
+		seconds: timed(func() {
+			execCommand(mntSuite.clonePath, []string{"git", "checkout", COMMIT})
+		}),
+	})
+
+	logger.Info("Walking %v", mntSuite.clonePath)
+
+	times = append(times, op{
+		description: "walk clone (no files)",
+		seconds: timed(func() {
+			walk(mntSuite.clonePath, false)
+		}),
+	})
+
+	times = append(times, op{
+		description: "walk clone (with files)",
+		seconds: timed(func() {
+			walk(mntSuite.clonePath, true)
+		}),
+	})
+
+	logger.Info("Archiving %v", COMMIT)
+
+	contentDirPath := path.Join(mntSuite.clonesPath, "archive")
+	os.MkdirAll(contentDirPath, 0777)
+	times = append(times, op{
+		description: "archive and decompress",
+		seconds: timed(func() {
+			tarFilePath := path.Join(mntSuite.clonesPath, "archive.tar")
+			execCommand(mntSuite.clonePath, []string{"git", "archive", COMMIT, "--format=tar", "--output", tarFilePath})
+			execCommand(contentDirPath, []string{"tar", "-xf", tarFilePath})
+		}),
+	})
+
+	times = append(times, op{
+		description: "walk archive (no files)",
+		seconds: timed(func() {
+			walk(mntSuite.clonePath, false)
+		}),
+	})
+
+	times = append(times, op{
+		description: "walk archive (with files)",
+		seconds: timed(func() {
+			walk(mntSuite.clonePath, true)
+		}),
+	})
+
+	mountPoint := mntSuite.mount()
+	defer mntSuite.unmount(mountPoint)
+
+	virtualPath := path.Join(mountPoint, REPO_NAME, COMMIT)
+	times = append(times, op{
+		description: "walk virtual (no files)",
+		seconds: timed(func() {
+			walk(virtualPath, false)
+		}),
+	})
+	times = append(times, op{
+		description: "walk virtual #2 (no files)",
+		seconds: timed(func() {
+			walk(virtualPath, false)
+		}),
+	})
+
+	mountPoint = mntSuite.mount()
+	defer mntSuite.unmount(mountPoint)
+
+	virtualPath = path.Join(mountPoint, REPO_NAME, COMMIT)
+	times = append(times, op{
+		description: "walk virtual (with files)",
+		seconds: timed(func() {
+			walk(virtualPath, true)
+		}),
+	})
+	times = append(times, op{
+		description: "walk virtual #2 (with files)",
+		seconds: timed(func() {
+			walk(virtualPath, true)
+		}),
+	})
+
+	for _, timedOp := range times {
+		logger.Info("%v - %v sec", timedOp.description, timedOp.seconds)
+	}
 }
