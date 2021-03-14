@@ -9,7 +9,6 @@ import (
 )
 
 type EntryInode struct {
-	Inode
 	id               fuseops.InodeID
 	size             int64
 	isDir            bool
@@ -18,6 +17,8 @@ type EntryInode struct {
 	path             string
 	commitish        *CommitishInode
 }
+
+var _ Inode = &EntryInode{}
 
 func NewEntryInode(
 	commitish *CommitishInode,
@@ -62,7 +63,7 @@ func (in *EntryInode) GetOrAddChild(name string) (child Inode, err error) {
 
 func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
 	if !in.isDir {
-		return in.Inode.ListChildren()
+		return []*fuseutil.Dirent{}, nil
 	}
 	children = make([]*fuseutil.Dirent, len(in.entries))
 	in.entryNameToIndex.Range(func(name, i interface{}) bool {
@@ -87,7 +88,7 @@ func (in *EntryInode) ListChildren() (children []*fuseutil.Dirent, err error) {
 
 func (in *EntryInode) Contents() (string, error) {
 	if in.isDir {
-		return in.Inode.Contents()
+		return "", nil
 	}
 	return in.commitish.repository.provider.FileContents(in.commitish.commitish, in.path)
 }

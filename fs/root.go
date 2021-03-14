@@ -8,11 +8,12 @@ import (
 )
 
 type RootInode struct {
-	Inode
 	clonesPath         string
 	repositoriesByName cmap.ConcurrentMap
 	mutex              *sync.Mutex
 }
+
+var _ Inode = &RootInode{}
 
 func NewRootInode(clonesPath string) (root *RootInode, err error) {
 	return &RootInode{

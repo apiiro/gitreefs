@@ -11,12 +11,13 @@ import (
 )
 
 type RepositoryInode struct {
-	Inode
 	id              fuseops.InodeID
 	clonePath       string
 	provider        *git.RepositoryProvider
 	commitishByName cmap.ConcurrentMap
 }
+
+var _ Inode = &RepositoryInode{}
 
 func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode, err error) {
 	clonePath := path.Join(clonesPath, name)

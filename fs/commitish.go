@@ -10,7 +10,6 @@ import (
 )
 
 type CommitishInode struct {
-	Inode
 	id         fuseops.InodeID
 	commitish  string
 	repository *RepositoryInode
@@ -18,6 +17,8 @@ type CommitishInode struct {
 	rootEntry  *EntryInode
 	mutex      *sync.Mutex
 }
+
+var _ Inode = &CommitishInode{}
 
 func NewCommitishInode(parent *RepositoryInode, commitish string) (inode *CommitishInode, err error) {
 	var canResolve bool
