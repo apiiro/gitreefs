@@ -71,6 +71,7 @@ func (in *CommitishInode) inodeTreeFromGitTree(gitEntry *git.Entry, entryPath st
 
 func (in *CommitishInode) fetchContentIfNeeded() (err error) {
 	in.mutex.Lock()
+	defer in.mutex.Unlock()
 	if !in.isFetched {
 		var root *git.RootEntry
 		root, err = in.repository.provider.ListTree(in.commitish)
@@ -81,7 +82,6 @@ func (in *CommitishInode) fetchContentIfNeeded() (err error) {
 			}
 		}
 	}
-	in.mutex.Unlock()
 	return
 }
 

@@ -19,7 +19,7 @@ type mountTestSuite struct {
 }
 
 func TestMountTestSuite(t *testing.T) {
-	logger.InitLoggers("logs/mount_test-%v.log", "INFO", "")
+	logger.InitLoggers("logs/mount_test-%v.log", "INFO", "-")
 	suite.Run(t, new(mountTestSuite))
 }
 

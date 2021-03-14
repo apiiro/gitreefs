@@ -7,8 +7,13 @@ NAME:
    gitreefs - Mount a forest of git trees as a virtual file system
 
 USAGE:
-   gitreefs [global Options] clones mountpoint
-GLOBAL OPTIONS:
+   gitreefs [Options] clones-path mount-point
+
+ARGS:
+    clones-path  path to a directory containing git clones (with .git in them)
+    mount-point  path to target location to mount the virtual fs at
+
+OPTIONS:
    --log-file value   Output logs file path format. (default: "logs/gitreefs-%v-%v.log")
    --log-level value  Set log level. (default: "DEBUG")
    --help, -h         show help

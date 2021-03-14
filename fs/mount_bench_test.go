@@ -19,7 +19,7 @@ type mountBenchmarkTestSuite struct {
 }
 
 func TestMountBenchmarkTestSuite(t *testing.T) {
-	logger.InitLoggers("logs/mount_test-%v.log", "INFO", "")
+	logger.InitLoggers("logs/mount_bench_test-%v.log", "INFO", "-")
 	suite.Run(t, new(mountBenchmarkTestSuite))
 }
 
@@ -86,9 +86,9 @@ func (mntSuite *mountBenchmarkTestSuite) TearDownTest() {
 	}
 }
 
-func walk(atPath string) {
+func walk(atPath string, readFile bool) {
 	filepath.Walk(atPath, func(path string, info os.FileInfo, err error) error {
-		if info != nil && !info.IsDir() {
+		if readFile && info != nil && !info.IsDir() {
 			ioutil.ReadFile(path)
 		}
 		return nil
@@ -96,18 +96,20 @@ func walk(atPath string) {
 }
 
 func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
+	readFile := false
+
 	start := time.Now()
-	walk(path.Join(mntSuite.clonesPath, "elasticsearch"))
+	walk(path.Join(mntSuite.clonesPath, "elasticsearch"), readFile)
 	elapsedPhysicalSec := time.Since(start).Seconds()
 	logger.Info("Walking physical fs: %v sec", elapsedPhysicalSec)
 
 	start = time.Now()
-	walk(path.Join(mntSuite.mountPoint, "elasticsearch", "b926bf0"))
+	walk(path.Join(mntSuite.mountPoint, "elasticsearch", "b926bf0"), readFile)
 	elapsedVirtualSec := time.Since(start).Seconds()
 	logger.Info("Walking virtual fs #1: %v sec", elapsedVirtualSec)
 
 	start = time.Now()
-	walk(path.Join(mntSuite.mountPoint, "elasticsearch", "b926bf0"))
+	walk(path.Join(mntSuite.mountPoint, "elasticsearch", "b926bf0"), readFile)
 	elapsedVirtualSecSecondRound := time.Since(start).Seconds()
 	logger.Info("Walking virtual fs #2: %v sec", elapsedVirtualSecSecondRound)
 }
