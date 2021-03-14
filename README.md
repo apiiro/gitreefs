@@ -17,7 +17,7 @@ GLOBAL OPTIONS:
 
 ![icon](./gitreefs.png)
 
-```bash
+```
 /disk/git/                =>    /mnt/git/
           | clone1/.git                 | clone1/
                                              | commit1/

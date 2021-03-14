@@ -14,8 +14,13 @@ func init() {
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} {{if .Flags}}[global Options]{{end}} clones mountpoint
-GLOBAL OPTIONS:
+   {{.Name}} {{if .Flags}}[Options]{{end}} clones-path mount-point
+
+ARGS:
+    clones-path{{ "\t" }}path to a directory containing git clones (with .git in them)
+    mount-point{{ "\t" }}path to target location to mount the virtual fs at
+
+OPTIONS:
    {{range .Flags}}{{.}}
    {{end}}
 `
