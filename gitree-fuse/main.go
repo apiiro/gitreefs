@@ -1,59 +1,58 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/jacobsa/fuse"
 	"github.com/urfave/cli"
+	"gitreefs/common"
 	"gitreefs/gitree-fuse/fs"
 	"gitreefs/logger"
+	"golang.org/x/net/context"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-func main() {
-	app := Init()
-
-	var internalErr error
-	app.Action = func(context *cli.Context) {
-		internalErr = run(context)
-	}
-
-	runErr := app.Run(os.Args)
-	exitError := false
-	if runErr != nil {
-		logger.Error("gitree-fuse: %v", runErr)
-		exitError = true
-	}
-	if internalErr != nil {
-		logger.Error("gitree-fuse: %v", internalErr)
-		exitError = true
-	}
-	logger.CloseLoggers()
-	if exitError {
-		os.Exit(1)
-	}
-	return
+type FuseApp struct {
 }
 
-func run(ctx *cli.Context) error {
+func main() {
+	var app common.App = &FuseApp{}
+	common.RunApp(app)
+}
 
-	opts, err := ParseOptions(ctx)
-	if err != nil {
-		return fmt.Errorf("parsing options: %w", err)
+func (app *FuseApp) Initialize() *cli.App {
+	return &cli.App{
+		Name:    "gitreefs-fuse",
+		Version: Version,
+		Usage:   "Mount a forest of git trees as a virtual file system backed by FUSE",
+		Writer:  os.Stderr,
+		Flags: []cli.Flag{
+
+			cli.StringFlag{
+				Name:  "log-file",
+				Value: "logs/gitreefs-%v-%v.log",
+				Usage: "Output logs file path format.",
+			},
+
+			cli.StringFlag{
+				Name:  "log-level",
+				Value: "DEBUG",
+				Usage: "Set log level.",
+			},
+		},
 	}
+}
 
-	err = logger.InitLoggers(opts.LogFile, opts.LogLevel, Version)
-	if err != nil {
-		return fmt.Errorf("init log file: %w", err)
-	}
+func (app *FuseApp) RunUntilStopped(opts common.Options) (err error) {
 
-	logger.Info("Mounting: %v --> %v", opts.ClonesPath, opts.MountPoint)
+	clonesPath := opts.(*options).clonesPath
+	mountPoint := opts.(*options).mountPoint
+	logger.Info("Mounting: %v --> %v", clonesPath, mountPoint)
 
 	var mountedFs *fuse.MountedFileSystem
 	{
-		mountedFs, err = fs.Mount(opts.ClonesPath, opts.MountPoint, false)
+		mountedFs, err = fs.Mount(clonesPath, mountPoint, false)
 
 		if err == nil {
 			logger.Info("fileHandler system has been successfully mounted.")

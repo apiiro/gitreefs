@@ -6,7 +6,7 @@ import (
 	"github.com/orcaman/concurrent-map"
 	"gitreefs/git"
 	"gitreefs/logger"
-	"gitreefs/util"
+	"gitreefs/common"
 	"path"
 )
 
@@ -21,7 +21,7 @@ var _ Inode = &RepositoryInode{}
 
 func NewRepositoryInode(clonesPath string, name string) (inode *RepositoryInode, err error) {
 	clonePath := path.Join(clonesPath, name)
-	err = util.ValidateDirectory(clonePath, false)
+	err = common.ValidateDirectory(clonePath, false)
 	if err != nil {
 		return
 	}

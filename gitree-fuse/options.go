@@ -3,68 +3,36 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli"
-	"gitreefs/util"
+	"gitreefs/common"
 	"os"
 	"path"
 	"path/filepath"
 )
 
-func init() {
-	cli.AppHelpTemplate = `NAME:
-   {{.Name}} - {{.Usage}}
-
-USAGE:
-   {{.Name}} {{if .Flags}}[Options]{{end}} clones-path mount-point
-
-ARGS:
-    clones-path{{ "\t" }}path to a directory containing git clones (with .git in them)
-    mount-point{{ "\t" }}path to target location to mount the virtual fs at
-
-OPTIONS:
-   {{range .Flags}}{{.}}
-   {{end}}
-`
+type options struct {
+	logFile    string
+	logLevel   string
+	clonesPath string
+	mountPoint string
 }
 
-func Init() (app *cli.App) {
-	app = &cli.App{
-		Name:    "gitree-gitree-fuse",
-		Version: Version,
-		Usage:   "Mount a forest of git trees as a virtual file system",
-		Writer:  os.Stderr,
-		Flags: []cli.Flag{
+var _ common.Options = &options{}
 
-			cli.StringFlag{
-				Name:  "log-file",
-				Value: "logs/gitreefs-%v-%v.log",
-				Usage: "Output logs file path format.",
-			},
-
-			cli.StringFlag{
-				Name:  "log-level",
-				Value: "DEBUG",
-				Usage: "Set log level.",
-			},
-		},
-	}
-
-	return
+func (opts *options) LogFile() string {
+	return opts.logFile
 }
 
-type Options struct {
-	LogFile    string
-	LogLevel   string
-	ClonesPath string
-	MountPoint string
+func (opts *options) LogLevel() string {
+	return opts.logLevel
 }
 
-func ParseOptions(c *cli.Context) (opts *Options, err error) {
+func (app *FuseApp) ParseOptions(ctx *cli.Context) (opts common.Options, err error) {
 	var clonesPath, mountPoint string
-	switch len(c.Args()) {
+	switch len(ctx.Args()) {
 
 	case 2:
-		clonesPath = c.Args()[0]
-		mountPoint = c.Args()[1]
+		clonesPath = ctx.Args()[0]
+		mountPoint = ctx.Args()[1]
 
 	default:
 		err = fmt.Errorf(
@@ -76,7 +44,7 @@ func ParseOptions(c *cli.Context) (opts *Options, err error) {
 		return
 	}
 
-	err = util.ValidateDirectory(clonesPath, false)
+	err = common.ValidateDirectory(clonesPath, false)
 	if err != nil {
 		return
 	}
@@ -87,16 +55,16 @@ func ParseOptions(c *cli.Context) (opts *Options, err error) {
 		return
 	}
 
-	err = util.ValidateDirectory(mountPoint, true)
+	err = common.ValidateDirectory(mountPoint, true)
 	if err != nil {
 		return
 	}
 
-	opts = &Options{
-		LogFile:    c.String("log-file"),
-		LogLevel:   c.String("log-level"),
-		ClonesPath: clonesPath,
-		MountPoint: mountPoint,
+	opts = &options{
+		logFile:    ctx.String("log-file"),
+		logLevel:   ctx.String("log-level"),
+		clonesPath: clonesPath,
+		mountPoint: mountPoint,
 	}
 	return
 }

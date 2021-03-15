@@ -6,7 +6,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"gitreefs/logger"
-	"gitreefs/util"
+	"gitreefs/common"
 )
 
 const (
@@ -22,7 +22,7 @@ type RepositoryProvider struct {
 }
 
 func NewRepositoryProvider(clonePath string) (provider *RepositoryProvider, err error) {
-	validateErr := util.ValidateDirectory(clonePath, false)
+	validateErr := common.ValidateDirectory(clonePath, false)
 	if validateErr != nil {
 		logger.Info("clone at %v doesn't exist", clonePath)
 		return nil, nil
