@@ -35,11 +35,8 @@ func (app *FuseApp) ParseOptions(ctx *cli.Context) (opts common.Options, err err
 		mountPoint = ctx.Args()[1]
 
 	default:
-		err = fmt.Errorf(
-			"%s takes exactly two arguments. Run `%s --help` for more info",
-			path.Base(os.Args[0]),
-			path.Base(os.Args[0]),
-		)
+		exeName := path.Base(os.Args[0])
+		err = fmt.Errorf("%s takes exactly two arguments. Run `%s --help` for more info", exeName, exeName)
 
 		return
 	}

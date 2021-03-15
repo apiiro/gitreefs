@@ -8,13 +8,13 @@ import (
 )
 
 type App interface {
-	Initialize() *cli.App
+	DeclareCli() *cli.App
 	ParseOptions(*cli.Context) (opts Options, err error)
 	RunUntilStopped(opts Options) error
 }
 
 func RunApp(app App) {
-	cliApp := app.Initialize()
+	cliApp := app.DeclareCli()
 
 	var internalErr error
 	cliApp.Action = func(context *cli.Context) {

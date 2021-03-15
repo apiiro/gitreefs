@@ -21,7 +21,7 @@ func main() {
 	common.RunApp(app)
 }
 
-func (app *FuseApp) Initialize() *cli.App {
+func (app *FuseApp) DeclareCli() *cli.App {
 	return &cli.App{
 		Name:    "gitreefs-fuse",
 		Version: Version,
