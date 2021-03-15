@@ -1,3 +1,5 @@
+// +build bench
+
 package fs
 
 import (
@@ -8,20 +10,24 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
 
-//const (
-//	REMOTE    = "https://github.com/apiirolab/elasticsearch.git"
-//	REPO_NAME = "elasticsearch"
-//	COMMIT    = "b926bf0"
-//)
 const (
-	REMOTE    = "https://github.com/apiirolab/EVO-Exchange-BE-2019"
-	REPO_NAME = "EVO-Exchange-BE-2019"
-	COMMIT    = "c47980a"
+	REMOTE       = "https://github.com/apiirolab/elasticsearch.git"
+	REPO_NAME    = "elasticsearch"
+	COMMIT       = "b926bf0"
+	PRINT_MEMORY = true
 )
+
+//const (
+//	REMOTE       = "https://github.com/apiirolab/EVO-Exchange-BE-2019"
+//	REPO_NAME    = "EVO-Exchange-BE-2019"
+//	COMMIT       = "c47980a"
+//	PRINT_MEMORY = false
+//)
 
 type mountBenchmarkTestSuite struct {
 	suite.Suite
@@ -92,6 +98,10 @@ func (mntSuite *mountBenchmarkTestSuite) unmount(mountPoint string) {
 	if unmountErr != nil {
 		panic(unmountErr)
 	}
+	if PRINT_MEMORY {
+		runtime.GC()
+		printMemoryUsage()
+	}
 }
 
 func walk(atPath string, readFile bool) {
@@ -114,6 +124,15 @@ func timed(op Op) (elapsedSeconds float64) {
 type op struct {
 	description string
 	seconds     float64
+}
+
+func printMemoryUsage() {
+	if !PRINT_MEMORY {
+		return
+	}
+	var stats runtime.MemStats
+	runtime.ReadMemStats(&stats)
+	logger.Info("\tHeap = %v GB ", float64(stats.Alloc)/(1024*1024*1024))
 }
 
 func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
@@ -175,6 +194,8 @@ func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
 	mountPoint := mntSuite.mount()
 	defer mntSuite.unmount(mountPoint)
 
+	printMemoryUsage()
+
 	virtualPath := path.Join(mountPoint, REPO_NAME, COMMIT)
 	times = append(times, op{
 		description: "walk virtual (no files)",
@@ -182,6 +203,9 @@ func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
 			walk(virtualPath, false)
 		}),
 	})
+
+	printMemoryUsage()
+
 	times = append(times, op{
 		description: "walk virtual #2 (no files)",
 		seconds: timed(func() {
@@ -189,8 +213,12 @@ func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
 		}),
 	})
 
+	printMemoryUsage()
+
 	mountPoint = mntSuite.mount()
 	defer mntSuite.unmount(mountPoint)
+
+	printMemoryUsage()
 
 	virtualPath = path.Join(mountPoint, REPO_NAME, COMMIT)
 	times = append(times, op{
@@ -199,12 +227,17 @@ func (mntSuite *mountBenchmarkTestSuite) TestBenchmarkWalkVirtualFileSystem() {
 			walk(virtualPath, true)
 		}),
 	})
+
+	printMemoryUsage()
+
 	times = append(times, op{
 		description: "walk virtual #2 (with files)",
 		seconds: timed(func() {
 			walk(virtualPath, true)
 		}),
 	})
+
+	printMemoryUsage()
 
 	for _, timedOp := range times {
 		logger.Info("%v - %v sec", timedOp.description, timedOp.seconds)

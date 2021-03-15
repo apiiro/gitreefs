@@ -36,6 +36,12 @@ OPTIONS:
           | ...
 ```
 
+## Tests
+
+```bash
+go test -v ./...
+```
+
 ## Benchmark
 
 Currently not that good

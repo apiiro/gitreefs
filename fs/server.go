@@ -154,6 +154,12 @@ func (fs *fuseFs) GetXattr(
 	return nil
 }
 
+func (fs *fuseFs) ListXattr(
+	ctx context.Context,
+	op *fuseops.ListXattrOp) error {
+	return fuse.ENOSYS
+}
+
 func (fs *fuseFs) ForgetInode(
 	ctx context.Context,
 	op *fuseops.ForgetInodeOp) error {
