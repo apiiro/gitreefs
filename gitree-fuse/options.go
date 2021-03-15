@@ -28,7 +28,7 @@ OPTIONS:
 
 func Init() (app *cli.App) {
 	app = &cli.App{
-		Name:    "gitreefs",
+		Name:    "gitree-gitree-fuse",
 		Version: Version,
 		Usage:   "Mount a forest of git trees as a virtual file system",
 		Writer:  os.Stderr,

@@ -100,15 +100,15 @@ func (gitSuite *gitTestSuite) TestListTreeForRegularCommit() {
 	gitSuite.EqualValues(0, dirEntry.Size)
 	gitSuite.Equal(1, len(dirEntry.EntriesByName))
 
-	gitSuite.Contains(tree.EntriesByPath, "src/main/java/com/dchealth/service/common", "no common dir")
-	dirEntry = lookupNode(&tree.Entry, "src/main/java/com/dchealth/service/common")
+	gitSuite.Contains(tree.EntriesByPath, "src/gitree-fuse/java/com/dchealth/service/common", "no common dir")
+	dirEntry = lookupNode(&tree.Entry, "src/gitree-fuse/java/com/dchealth/service/common")
 	gitSuite.NotNil(dirEntry)
 	gitSuite.True(dirEntry.IsDir)
 	gitSuite.EqualValues(0, dirEntry.Size)
 	gitSuite.Equal(7, len(dirEntry.EntriesByName))
 
-	gitSuite.Contains(tree.EntriesByPath, "src/main/java/com/dchealth/service/common/YunUserService.java", "no java file")
-	fileEntry := lookupNode(&tree.Entry, "src/main/java/com/dchealth/service/common/YunUserService.java")
+	gitSuite.Contains(tree.EntriesByPath, "src/gitree-fuse/java/com/dchealth/service/common/YunUserService.java", "no java file")
+	fileEntry := lookupNode(&tree.Entry, "src/gitree-fuse/java/com/dchealth/service/common/YunUserService.java")
 	gitSuite.NotNil(dirEntry)
 	gitSuite.False(fileEntry.IsDir)
 	gitSuite.EqualValues(28092, fileEntry.Size)
@@ -148,7 +148,7 @@ func (gitSuite *gitTestSuite) TestListTreeForBranchName() {
 }
 
 func (gitSuite *gitTestSuite) TestFileContents() {
-	contents, err := gitSuite.provider.FileContents("2ca742044ba451d00c6854a465fdd4280d9ad1f5", "src/main/java/com/dchealth/service/common/YunUserService.java")
+	contents, err := gitSuite.provider.FileContents("2ca742044ba451d00c6854a465fdd4280d9ad1f5", "src/gitree-fuse/java/com/dchealth/service/common/YunUserService.java")
 	gitSuite.Nil(err, "git.ListTree: %v", err)
 	gitSuite.EqualValues(28092, len(contents), "file contents size not as expected")
 }
@@ -157,7 +157,7 @@ func (gitSuite *gitTestSuite) TestFileContentsForNonExisting() {
 	contents, err := gitSuite.provider.FileContents("2ca742044ba451d00c6854a465fdd4280d9ad1f5", "src/YunUserService.java")
 	gitSuite.NotNil(err)
 	gitSuite.EqualValues(0, len(contents), "file contents size not as expected")
-	contents, err = gitSuite.provider.FileContents("wat", "src/main/java/com/dchealth/service/common/YunUserService.java")
+	contents, err = gitSuite.provider.FileContents("wat", "src/gitree-fuse/java/com/dchealth/service/common/YunUserService.java")
 	gitSuite.NotNil(err)
 	gitSuite.EqualValues(0, len(contents), "file contents size not as expected")
 }

@@ -43,5 +43,5 @@ func Mount(clonesPath string, mountPoint string, isRetry bool) (mountedFs *fuse.
 		}
 		logger.Error("Failed to unmount at %v after failing to mount: %v", mountPoint, err)
 	}
-	return nil, fmt.Errorf("fuse.Mount failed: %w", err)
+	return nil, fmt.Errorf("gitree-fuse.Mount failed: %w", err)
 }

@@ -1,8 +1,21 @@
 # gitreefs
 
-Virtual file system, mapping from a directory of clones to all of their possible contents:
+Virtual file system, mapping from a directory of clones to all of their possible contents
 
 ![icon](./gitreefs.png)
+
+## Tests
+
+```bash
+go test -v ./...
+```
+
+## FUSE solution
+
+```bash
+go run gitreefs/gitree-fuse --help
+go run gitreefs/gitree-fuse --log-level INFO /var/git /mnt/git
+```
 
 ```bash
 NAME:
@@ -36,18 +49,12 @@ OPTIONS:
           | ...
 ```
 
-## Open Issues
+### Open Issues
 
 - Performance - can add caching, either in memory of physical fs based
 - Memory usage - currently nothing allocated will ever be released. Can add interval clean up to swipe away unused roots (in repository or commitish level).
 
-## Tests
-
-```bash
-go test -v ./...
-```
-
-## Benchmark
+### Benchmark
 
 Currently not that good
 

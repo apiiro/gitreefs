@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/fuse"
 	"github.com/urfave/cli"
-	"gitreefs/fs"
+	"gitreefs/gitree-fuse/fs"
 	"gitreefs/logger"
 	"os"
 	"os/signal"
@@ -23,11 +23,11 @@ func main() {
 	runErr := app.Run(os.Args)
 	exitError := false
 	if runErr != nil {
-		logger.Error("main: %v", runErr)
+		logger.Error("gitree-fuse: %v", runErr)
 		exitError = true
 	}
 	if internalErr != nil {
-		logger.Error("main: %v", internalErr)
+		logger.Error("gitree-fuse: %v", internalErr)
 		exitError = true
 	}
 	logger.CloseLoggers()
