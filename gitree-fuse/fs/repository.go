@@ -4,9 +4,9 @@ import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
 	"github.com/orcaman/concurrent-map"
+	"gitreefs/common"
 	"gitreefs/git"
 	"gitreefs/logger"
-	"gitreefs/common"
 	"path"
 )
 

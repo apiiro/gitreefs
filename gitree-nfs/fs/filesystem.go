@@ -2,75 +2,159 @@ package fs
 
 import (
 	"github.com/go-git/go-billy/v5"
+	"gitreefs/git"
+	"gitreefs/logger"
 	"os"
+	"path/filepath"
 )
 
 type GitFileSystem struct {
-	clonesPath string
+	root *Root
 }
 
 var _ billy.Filesystem = &GitFileSystem{}
+var _ billy.Capable = &GitFileSystem{}
 
 func NewGitFileSystem(clonesPath string) (*GitFileSystem, error) {
-	return &GitFileSystem{clonesPath: clonesPath}, nil
+	root, err := NewRoot(clonesPath)
+	if err != nil {
+		return nil, err
+	}
+	return &GitFileSystem{
+		root: root,
+	}, nil
 }
 
-func (fs *GitFileSystem) Create(filename string) (billy.File, error) {
-	panic("implement me")
+func (fs *GitFileSystem) Capabilities() billy.Capability {
+	return billy.ReadCapability | billy.SeekCapability
 }
 
-func (fs *GitFileSystem) Open(filename string) (billy.File, error) {
-	panic("implement me")
+func (fs *GitFileSystem) Open(path string) (billy.File, error) {
+	components, err := breakdown(path)
+	if err != nil {
+		logger.Error("fs.Open: could not find %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+
+	if !components.hasRepository() || !components.hasCommitish() {
+		return nil, os.ErrNotExist
+	}
+
+	var repository *Repository
+	repository, err = fs.root.getOrAddRepository(components.repositoryName)
+	if err != nil || repository == nil {
+		logger.Info("fs.Open: could not find repository for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+
+	var commitish *Commitish
+	commitish, err = repository.getOrAddCommitish(components.commitishName)
+	if err != nil || commitish == nil {
+		logger.Info("fs.Open: could not find commitish for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+
+	file, err := NewFile(path, commitish, components.subPath)
+	if err != nil || file == nil {
+		logger.Info("fs.Open: could not open file for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+	return file, nil
 }
 
 func (fs *GitFileSystem) OpenFile(filename string, flag int, perm os.FileMode) (billy.File, error) {
-	panic("implement me")
+	return fs.Open(filename)
 }
 
-func (fs *GitFileSystem) Stat(filename string) (os.FileInfo, error) {
-	panic("implement me")
-}
+func (fs *GitFileSystem) Stat(path string) (os.FileInfo, error) {
+	components, err := breakdown(path)
+	if err != nil {
+		logger.Error("fs.Stat: could not find %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
 
-func (fs *GitFileSystem) Rename(oldpath, newpath string) error {
-	panic("implement me")
-}
+	if !components.hasRepository() {
+		return statDir("")
+	}
 
-func (fs *GitFileSystem) Remove(filename string) error {
-	panic("implement me")
-}
+	var repository *Repository
+	repository, err = fs.root.getOrAddRepository(components.repositoryName)
+	if err != nil || repository == nil {
+		logger.Info("fs.Stat: could not find repository for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
 
-func (fs *GitFileSystem) Join(elem ...string) string {
-	panic("implement me")
-}
+	if !components.hasCommitish() {
+		return statDir(repository.name)
+	}
 
-func (fs *GitFileSystem) TempFile(dir, prefix string) (billy.File, error) {
-	panic("implement me")
+	var commitish *Commitish
+	commitish, err = repository.getOrAddCommitish(components.commitishName)
+	if err != nil || commitish == nil {
+		logger.Info("fs.Stat: could not find commitish for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+
+	entry, err := commitish.GetEntry(components.subPath)
+	if err != nil || entry == nil {
+		logger.Info("fs.Stat: could not find git entry for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+
+	baseName := git.ExtractBaseName(path)
+	if entry.IsDir {
+		info, err := statDir(baseName)
+		if info == nil || err != nil {
+			logger.Error("fs.Stat: failed to stat %v: %v", path, err)
+			return nil, os.ErrNotExist
+		}
+		return info, nil
+	}
+	info, err := statFile(baseName, entry.Size)
+	if info == nil || err != nil {
+		logger.Error("fs.Stat: failed to stat %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+	return info, nil
 }
 
 func (fs *GitFileSystem) ReadDir(path string) ([]os.FileInfo, error) {
-	panic("implement me")
+	components, err := breakdown(path)
+	if err != nil {
+		logger.Error("fs.ReadDir: could not find %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+
+	if !components.hasRepository() || !components.hasCommitish() {
+		return []os.FileInfo{}, nil
+	}
+
+	var repository *Repository
+	repository, err = fs.root.getOrAddRepository(components.repositoryName)
+	if err != nil || repository == nil {
+		logger.Info("fs.ReadDir: could not find repository for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+
+	var commitish *Commitish
+	commitish, err = repository.getOrAddCommitish(components.commitishName)
+	if err != nil || commitish == nil {
+		logger.Info("fs.ReadDir: could not find commitish for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+
+	files, err := commitish.ListDir(components.subPath)
+	if files == nil || err != nil {
+		logger.Error("fs.ReadDir: failed on %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+	return files, nil
 }
 
-func (fs *GitFileSystem) MkdirAll(filename string, perm os.FileMode) error {
-	panic("implement me")
-}
-
-func (fs *GitFileSystem) Lstat(filename string) (os.FileInfo, error) {
-	panic("implement me")
-}
-
-func (fs *GitFileSystem) Symlink(target, link string) error {
-	panic("implement me")
-}
-
-func (fs *GitFileSystem) Readlink(link string) (string, error) {
-	panic("implement me")
-}
-
-func (fs *GitFileSystem) Chroot(path string) (billy.Filesystem, error) {
-	panic("implement me")
+func (fs *GitFileSystem) Join(elem ...string) string {
+	return filepath.Join(elem...)
 }
 
 func (fs *GitFileSystem) Root() string {
-	panic("implement me")
+	return "/"
 }

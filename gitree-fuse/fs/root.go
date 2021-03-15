@@ -3,14 +3,12 @@ package fs
 import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
-	cmap "github.com/orcaman/concurrent-map"
-	"sync"
+	"github.com/orcaman/concurrent-map"
 )
 
 type RootInode struct {
 	clonesPath         string
 	repositoriesByName cmap.ConcurrentMap
-	mutex              *sync.Mutex
 }
 
 var _ Inode = &RootInode{}
@@ -19,7 +17,6 @@ func NewRootInode(clonesPath string) (root *RootInode, err error) {
 	return &RootInode{
 		clonesPath:         clonesPath,
 		repositoriesByName: cmap.New(),
-		mutex:              &sync.Mutex{},
 	}, nil
 }
 
