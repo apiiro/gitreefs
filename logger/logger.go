@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"log"
 	"os"
@@ -23,7 +24,7 @@ var (
 	debugLogger *log.Logger
 	infoLogger  *log.Logger
 	errorLogger *log.Logger
-	fileHandler *os.File
+	fileLogger  *lumberjack.Logger
 	globalLevel LogLevel
 	appVersion  = "-"
 )
@@ -47,16 +48,14 @@ func InitLoggers(filePathFormat string, level string, version string) error {
 		return err
 	}
 
-	file, err := os.OpenFile(
-		filePath,
-		os.O_CREATE|os.O_APPEND|os.O_RDWR,
-		filePermissions,
-	)
-	if err != nil {
-		return err
+	fileLogger = &lumberjack.Logger{
+		Filename:   filePath,
+		MaxSize:    15, // MB
+		MaxAge:     28, // days
+		MaxBackups: 10,
+		LocalTime:  false,
+		Compress:   true,
 	}
-
-	fileHandler = file
 	globalLevel = stringToLevel(level)
 	appVersion = version
 
@@ -102,8 +101,8 @@ func createLogger(level LogLevel) io.Writer {
 	}
 
 	writers := []io.Writer{consoleWriter}
-	if fileHandler != nil {
-		writers = append(writers, fileHandler)
+	if fileLogger != nil {
+		writers = append(writers, fileLogger)
 	}
 	return &logWriter{
 		level:   levelToString(level),
@@ -112,9 +111,9 @@ func createLogger(level LogLevel) io.Writer {
 }
 
 func CloseLoggers() {
-	if fileHandler != nil {
-		fileHandler.Close()
-		fileHandler = nil
+	if fileLogger != nil {
+		fileLogger.Close()
+		fileLogger = nil
 	}
 }
 
