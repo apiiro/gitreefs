@@ -36,6 +36,11 @@ OPTIONS:
           | ...
 ```
 
+## Open Issues
+
+- Performance - can add caching, either in memory of physical fs based
+- Memory usage - currently nothing allocated will ever be released. Can add interval clean up to swipe away unused roots (in repository or commitish level).
+
 ## Tests
 
 ```bash
