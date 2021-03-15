@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-git/go-billy/v5"
 	"github.com/urfave/cli"
 	"github.com/willscott/go-nfs"
 	nfsHelper "github.com/willscott/go-nfs/helpers"
 	"gitreefs/common"
+	"gitreefs/gitree-nfs/fs"
 	"gitreefs/logger"
 	"net"
 	"os"
@@ -55,7 +55,10 @@ func (app *NfsApp) RunUntilStopped(opts common.Options) error {
 
 	logger.Info("nfs server running at %s and mirroring git clones at %v", listener.Addr(), clonesPath)
 
-	var fileSystem billy.Filesystem = nil // TODO
+	fileSystem, err := fs.NewGitFileSystem(clonesPath)
+	if err != nil {
+		return fmt.Errorf("failed to create fs on %v: %v", clonesPath, err)
+	}
 
 	handler := nfsHelper.NewNullAuthHandler(fileSystem)
 	cacheHelper := nfsHelper.NewCachingHandler(handler, cacheSize)
