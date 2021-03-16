@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli"
-	"gitreefs/common"
+	"gitreefs/core/common"
 	"os"
 	"path"
 	"strconv"

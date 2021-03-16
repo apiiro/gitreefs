@@ -4,7 +4,7 @@ package fuseserver
 
 import (
 	"github.com/stretchr/testify/suite"
-	"gitreefs/logger"
+	"gitreefs/core/logger"
 	"io/ioutil"
 	"os"
 	"os/exec"

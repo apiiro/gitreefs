@@ -2,9 +2,9 @@ package bfs
 
 import (
 	"github.com/orcaman/concurrent-map"
-	"gitreefs/common"
-	"gitreefs/git"
-	"gitreefs/logger"
+	"gitreefs/core/common"
+	"gitreefs/core/git"
+	"gitreefs/core/logger"
 	"path"
 )
 

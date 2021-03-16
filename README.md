@@ -6,11 +6,13 @@ Virtual file system, mapping from a directory of clones to all of their possible
 
 ## Packages
 
-- [git](git) - Layer to access git data, using [go-git](https://github.com/go-git/go-git).
-- [gitree-fuse](gitree-fuse) - Tool to run a virtual fs using FUSE, using [jacobsa/fuse](https://github.com/jacobsa/fuse).
-- [gitree-nfs](gitree-nfs) - Tool to run a virtual fs using NFS server, using [willscott/go-nfs](https://github.com/willscott/go-nfs).
-- [bfs](virtualfs/bfs) - Implementation of virtual git fs over [go-billy](https://github.com/go-git/go-billy).
-- [inodesfs](virtualfs/inodesfs) - Implementation of virtual git fs using inodes abstraction, as suiting `jacobsa/fuse`.
+### Executables
+- [fuse](fuse) - Tool to run a virtual fs using FUSE, using [jacobsa/fuse](https://github.com/jacobsa/fuse).
+- [nfs](nfs) - Tool to run a virtual fs using NFS server, using [willscott/go-nfs](https://github.com/willscott/go-nfs).
+### Core
+- [git](core/git) - Layer to access git data, using [go-git](https://github.com/go-git/go-git).
+- [bfs](core/virtualfs/bfs) - Implementation of virtual git fs over [go-billy](https://github.com/go-git/go-billy).
+- [inodefs](core/virtualfs/inodefs) - Implementation of virtual git fs using inodes abstraction, as suiting `jacobsa/fuse`.
 
 ## Tests
 
@@ -25,16 +27,16 @@ go test -v ./...
 ## FUSE solution
 
 ```bash
-go run gitreefs/gitree-fuse --help
-go run gitreefs/gitree-fuse --log-level INFO /var/git /mnt/git
+go run gitreefs/fuse --help
+go run gitreefs/fuse --log-level INFO /var/git /mnt/git
 ```
 
 ```bash
 NAME:
-   gitreefs - Mount a forest of git trees as a virtual file system
+   gitreefs-fuse - Mount a forest of git trees as a virtual file system
 
 USAGE:
-   gitreefs [Options] clones-path mount-point
+   gitreefs-fuse [Options] clones-path mount-point
 
 ARGS:
     clones-path  path to a directory containing git clones (with .git in them)

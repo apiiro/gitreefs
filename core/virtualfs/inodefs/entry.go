@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
-	"gitreefs/git"
+	"gitreefs/core/git"
 	"sync"
 )
 

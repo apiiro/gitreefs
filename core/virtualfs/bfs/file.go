@@ -2,8 +2,8 @@ package bfs
 
 import (
 	"github.com/go-git/go-billy/v5"
-	"gitreefs/git"
-	"gitreefs/logger"
+	"gitreefs/core/git"
+	"gitreefs/core/logger"
 	"io"
 	"os"
 )

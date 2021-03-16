@@ -1,8 +1,8 @@
 package bfs
 
 import (
-	"gitreefs/git"
-	"gitreefs/logger"
+	"gitreefs/core/git"
+	"gitreefs/core/logger"
 	"os"
 	"sync"
 )

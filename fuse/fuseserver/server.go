@@ -4,8 +4,8 @@ import (
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
-	"gitreefs/logger"
-	"gitreefs/virtualfs/inodefs"
+	"gitreefs/core/logger"
+	"gitreefs/core/virtualfs/inodefs"
 	"golang.org/x/net/context"
 	"sync"
 )

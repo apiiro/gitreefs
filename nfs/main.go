@@ -5,9 +5,9 @@ import (
 	"github.com/urfave/cli"
 	"github.com/willscott/go-nfs"
 	nfsHelper "github.com/willscott/go-nfs/helpers"
-	"gitreefs/common"
-	"gitreefs/logger"
-	"gitreefs/virtualfs/bfs"
+	"gitreefs/core/common"
+	"gitreefs/core/logger"
+	"gitreefs/core/virtualfs/bfs"
 	"net"
 	"os"
 )

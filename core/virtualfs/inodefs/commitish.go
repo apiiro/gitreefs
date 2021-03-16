@@ -3,8 +3,8 @@ package inodefs
 import (
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
-	"gitreefs/git"
-	"gitreefs/logger"
+	"gitreefs/core/git"
+	"gitreefs/core/logger"
 	"path"
 	"sync"
 )

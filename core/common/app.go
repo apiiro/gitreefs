@@ -3,7 +3,7 @@ package common
 import (
 	"fmt"
 	"github.com/urfave/cli"
-	"gitreefs/logger"
+	"gitreefs/core/logger"
 	"os"
 )
 
