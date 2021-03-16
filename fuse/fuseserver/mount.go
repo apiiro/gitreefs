@@ -20,7 +20,7 @@ func Mount(clonesPath string, mountPoint string, isRetry bool) (mountedFs *fuse.
 
 	fuseServer, err := NewFsServer(clonesPath)
 	if err != nil {
-		return nil, fmt.Errorf("fs_server.NewFsServer: %w", err)
+		return nil, fmt.Errorf("fuse.NewFsServer: %w", err)
 	}
 
 	mountCfg := &fuse.MountConfig{
@@ -28,7 +28,7 @@ func Mount(clonesPath string, mountPoint string, isRetry bool) (mountedFs *fuse.
 		VolumeName:  "gitreefs",
 		ReadOnly:    true,
 		DebugLogger: logger.DebugLogger(),
-		ErrorLogger: logger.ErrorLogger(),
+		ErrorLogger: logger.InfoLogger(),
 	}
 
 	mountedFs, err = fuse.Mount(mountPoint, fuseServer, mountCfg)

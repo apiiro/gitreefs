@@ -122,19 +122,19 @@ type badgerLogger struct {
 }
 
 func (bLogger *badgerLogger) Errorf(s string, i ...interface{}) {
-	logger.Error(s, i)
+	logger.Error(s, i...)
 }
 
 func (bLogger *badgerLogger) Warningf(s string, i ...interface{}) {
-	logger.Error(s, i)
+	logger.Error(s, i...)
 }
 
 func (bLogger *badgerLogger) Infof(s string, i ...interface{}) {
-	logger.Info(s, i)
+	logger.Info(s, i...)
 }
 
 func (bLogger *badgerLogger) Debugf(s string, i ...interface{}) {
-	logger.Debug(s, i)
+	logger.Debug(s, i...)
 }
 
 var _ badger.Logger = &badgerLogger{}
