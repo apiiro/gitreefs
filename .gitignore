@@ -15,4 +15,4 @@
 **/.vscode
 **/*.DotSettings.user
 **/logs
-gitreefs
+data

@@ -3,8 +3,10 @@ module gitreefs
 go 1.14
 
 require (
+	github.com/dgraph-io/badger v1.6.2
 	github.com/go-git/go-billy/v5 v5.0.0
 	github.com/go-git/go-git/v5 v5.2.0
+	github.com/google/uuid v1.2.0
 	github.com/jacobsa/fuse v0.0.0-20201216155545-e0296dec955f
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/orcaman/concurrent-map v0.0.0-20210106121528-16402b402231
@@ -16,5 +18,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
 
-//replace github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => github.com/apiiro/go-nfs v0.0.0-20210316102754-2400957dd743
-replace github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => ../go-nfs
+replace github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => github.com/apiiro/go-nfs v0.0.0-20210316134924-ac7edf8cf26b
+
+//replace github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => ../go-nfs

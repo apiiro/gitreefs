@@ -1,14 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"github.com/urfave/cli"
-	"github.com/willscott/go-nfs"
-	nfsHelper "github.com/willscott/go-nfs/helpers"
 	"gitreefs/core/common"
-	"gitreefs/core/logger"
-	"gitreefs/core/virtualfs/bfs"
-	"net"
 	"os"
 )
 
@@ -26,12 +20,12 @@ func (app *NfsApp) DeclareCli() *cli.App {
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} {{if .Flags}}[Options]{{end}} clones-path [port] [cacheSize]
+   {{.Name}} {{if .Flags}}[Options]{{end}} clones-path storage-path [cacheSize]
 
 ARGS:
     clones-path{{ "\t" }}path to a directory containing git clones (with .git in them)
+    storage-path{{ "\t" }}path to a directory in which to keep persistent storage (file handler mapping)
     port{{ "\t" }}(optional) to serve the server at, defaults to 2049
-    cacheSize{{ "\t" }}(optional) size of file handlers cache, defaults to 1024
 
 OPTIONS:
    {{range .Flags}}{{.}}
@@ -62,22 +56,7 @@ OPTIONS:
 
 func (app *NfsApp) RunUntilStopped(opts common.Options) error {
 	clonesPath := opts.(*options).clonesPath
+	storagePath := opts.(*options).storagePath
 	port := opts.(*options).port
-	//cacheSize := opts.(*options).cacheSize
-
-	listener, err := net.Listen("tcp", ":"+port)
-	if err != nil {
-		return fmt.Errorf("failed to listen on %v: %v", port, err)
-	}
-
-	logger.Info("nfs server running at %s and mirroring git clones at %v", listener.Addr(), clonesPath)
-
-	fileSystem, err := bfs.NewGitFileSystem(clonesPath)
-	if err != nil {
-		return fmt.Errorf("failed to create fuseserver on %v: %v", clonesPath, err)
-	}
-
-	handler := nfsHelper.NewNullAuthHandler(fileSystem)
-	binaryHandler := nfsHelper.NewBinaryHandler(handler, fileSystem)
-	return nfs.Serve(listener, binaryHandler, logger.DebugLogger(), logger.InfoLogger())
+	return Serve(clonesPath, "", port, storagePath)
 }
