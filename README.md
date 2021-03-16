@@ -4,11 +4,23 @@ Virtual file system, mapping from a directory of clones to all of their possible
 
 ![icon](./gitreefs.png)
 
+## Packages
+
+- [git](git) - Layer to access git data, using [go-git](https://github.com/go-git/go-git).
+- [gitree-fuse](gitree-fuse) - Tool to run a virtual fs using FUSE, using [jacobsa/fuse](https://github.com/jacobsa/fuse).
+- [gitree-nfs](gitree-nfs) - Tool to run a virtual fs using NFS server, using [willscott/go-nfs](https://github.com/willscott/go-nfs).
+- [bfs](virtualfs/bfs) - Implementation of virtual git fs over [go-billy](https://github.com/go-git/go-billy).
+- [inodesfs](virtualfs/inodesfs) - Implementation of virtual git fs using inodes abstraction, as suiting `jacobsa/fuse`.
+
 ## Tests
 
 ```bash
 go test -v ./...
 ```
+
+## NFS solution
+
+//...
 
 ## FUSE solution
 
