@@ -26,7 +26,9 @@ type Handler struct {
 var _ nfs.Handler = &Handler{}
 
 func NewHandler(fs billy.Filesystem, dataPath string) (*Handler, error) {
-	db, err := badger.Open(badger.DefaultOptions(dataPath))
+	opts := badger.DefaultOptions(dataPath)
+	opts.Logger = &badgerLogger{}
+	db, err := badger.Open(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -115,3 +117,24 @@ func (handler *Handler) FromHandle(handle []byte) (fs billy.Filesystem, path []s
 func (handler Handler) HandleLimit() int {
 	return math.MaxInt32
 }
+
+type badgerLogger struct {
+}
+
+func (bLogger *badgerLogger) Errorf(s string, i ...interface{}) {
+	logger.Error(s, i)
+}
+
+func (bLogger *badgerLogger) Warningf(s string, i ...interface{}) {
+	logger.Error(s, i)
+}
+
+func (bLogger *badgerLogger) Infof(s string, i ...interface{}) {
+	logger.Info(s, i)
+}
+
+func (bLogger *badgerLogger) Debugf(s string, i ...interface{}) {
+	logger.Debug(s, i)
+}
+
+var _ badger.Logger = &badgerLogger{}
