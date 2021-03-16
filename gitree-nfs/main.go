@@ -6,8 +6,8 @@ import (
 	"github.com/willscott/go-nfs"
 	nfsHelper "github.com/willscott/go-nfs/helpers"
 	"gitreefs/common"
-	"gitreefs/gitree-nfs/fs"
 	"gitreefs/logger"
+	"gitreefs/virtualfs/bfs"
 	"net"
 	"os"
 )
@@ -55,9 +55,9 @@ func (app *NfsApp) RunUntilStopped(opts common.Options) error {
 
 	logger.Info("nfs server running at %s and mirroring git clones at %v", listener.Addr(), clonesPath)
 
-	fileSystem, err := fs.NewGitFileSystem(clonesPath)
+	fileSystem, err := bfs.NewGitFileSystem(clonesPath)
 	if err != nil {
-		return fmt.Errorf("failed to create fs on %v: %v", clonesPath, err)
+		return fmt.Errorf("failed to create fuseserver on %v: %v", clonesPath, err)
 	}
 
 	handler := nfsHelper.NewNullAuthHandler(fileSystem)

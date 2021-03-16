@@ -1,4 +1,4 @@
-package fs
+package bfs
 
 import (
 	"gitreefs/git"

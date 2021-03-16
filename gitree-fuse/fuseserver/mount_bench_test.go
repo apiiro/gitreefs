@@ -1,6 +1,6 @@
 // +build bench
 
-package fs
+package fuseserver
 
 import (
 	"github.com/stretchr/testify/suite"

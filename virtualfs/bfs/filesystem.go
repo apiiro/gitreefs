@@ -1,4 +1,4 @@
-package fs
+package bfs
 
 import (
 	"github.com/go-git/go-billy/v5"
@@ -54,7 +54,13 @@ func (fs *GitFileSystem) Open(path string) (billy.File, error) {
 		return nil, os.ErrNotExist
 	}
 
-	file, err := NewFile(path, commitish, components.subPath)
+	var entry *git.Entry
+	entry, err = commitish.GetEntry(components.subPath)
+	if err != nil || entry == nil {
+		logger.Info("fs.Open: could not find file for %v: %v", path, err)
+		return nil, os.ErrNotExist
+	}
+	file, err := NewFile(path, commitish, components.subPath, entry.Size)
 	if err != nil || file == nil {
 		logger.Info("fs.Open: could not open file for %v: %v", path, err)
 		return nil, os.ErrNotExist
@@ -62,7 +68,7 @@ func (fs *GitFileSystem) Open(path string) (billy.File, error) {
 	return file, nil
 }
 
-func (fs *GitFileSystem) OpenFile(filename string, flag int, perm os.FileMode) (billy.File, error) {
+func (fs *GitFileSystem) OpenFile(filename string, _ int, _ os.FileMode) (billy.File, error) {
 	return fs.Open(filename)
 }
 

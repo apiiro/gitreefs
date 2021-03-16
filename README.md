@@ -26,7 +26,7 @@ USAGE:
 
 ARGS:
     clones-path  path to a directory containing git clones (with .git in them)
-    mount-point  path to target location to mount the virtual fs at
+    mount-point  path to target location to mount the virtual fuseserver at
 
 OPTIONS:
    --log-file value   Output logs file path format. (default: "logs/gitreefs-%v-%v.log")

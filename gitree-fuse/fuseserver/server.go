@@ -1,10 +1,11 @@
-package fs
+package fuseserver
 
 import (
 	"github.com/jacobsa/fuse"
 	"github.com/jacobsa/fuse/fuseops"
 	"github.com/jacobsa/fuse/fuseutil"
 	"gitreefs/logger"
+	"gitreefs/virtualfs/inodefs"
 	"golang.org/x/net/context"
 	"sync"
 )
@@ -16,8 +17,8 @@ type fuseFs struct {
 }
 
 func NewFsServer(clonesPath string) (server fuse.Server, err error) {
-	var rootInode *RootInode
-	rootInode, err = NewRootInode(clonesPath)
+	var rootInode *inodefs.RootInode
+	rootInode, err = inodefs.NewRootInode(clonesPath)
 	if err != nil {
 		return
 	}
@@ -36,12 +37,12 @@ func (fs *fuseFs) StatFS(
 	return nil
 }
 
-func (fs *fuseFs) lookUpInode(parentId fuseops.InodeID, name string) (inode Inode, err error) {
+func (fs *fuseFs) lookUpInode(parentId fuseops.InodeID, name string) (inode inodefs.Inode, err error) {
 	parent, found := fs.inodes.Load(parentId)
 	if !found {
 		return nil, nil
 	}
-	inode, err = parent.(Inode).GetOrAddChild(name)
+	inode, err = parent.(inodefs.Inode).GetOrAddChild(name)
 	if err != nil || inode == nil {
 		return
 	}
@@ -73,7 +74,7 @@ func (fs *fuseFs) GetInodeAttributes(
 	if !found {
 		return fuse.ENOENT
 	}
-	op.Attributes = inode.(Inode).Attributes()
+	op.Attributes = inode.(inodefs.Inode).Attributes()
 	return nil
 }
 
@@ -91,7 +92,7 @@ func (fs *fuseFs) ReadDir(
 	if !found {
 		return fuse.ENOENT
 	}
-	children, err := inode.(Inode).ListChildren()
+	children, err := inode.(inodefs.Inode).ListChildren()
 	if err != nil {
 		logger.Error("fuseFs.ReadDir for %v: %v", inode, err)
 		return fuse.EIO
@@ -127,7 +128,7 @@ func (fs *fuseFs) ReadFile(
 	if !found {
 		return fuse.ENOENT
 	}
-	contents, err := inode.(Inode).Contents()
+	contents, err := inode.(inodefs.Inode).Contents()
 	if err != nil {
 		logger.Error("fuseFs.ReadFile for %v: %v", inode, err)
 		return fuse.EIO

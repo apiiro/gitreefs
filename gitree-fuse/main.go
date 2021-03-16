@@ -5,7 +5,7 @@ import (
 	"github.com/jacobsa/fuse"
 	"github.com/urfave/cli"
 	"gitreefs/common"
-	"gitreefs/gitree-fuse/fs"
+	"gitreefs/gitree-fuse/fuseserver"
 	"gitreefs/logger"
 	"golang.org/x/net/context"
 	"os"
@@ -52,7 +52,7 @@ func (app *FuseApp) RunUntilStopped(opts common.Options) (err error) {
 
 	var mountedFs *fuse.MountedFileSystem
 	{
-		mountedFs, err = fs.Mount(clonesPath, mountPoint, false)
+		mountedFs, err = fuseserver.Mount(clonesPath, mountPoint, false)
 
 		if err == nil {
 			logger.Info("fileHandler system has been successfully mounted.")
@@ -81,7 +81,7 @@ func registerSignalHandler(mountPoint string) {
 		for {
 			<-signalChan
 			logger.Info("Received SIGINT, attempting to unmount...")
-			err := fs.Unmount(mountPoint)
+			err := fuseserver.Unmount(mountPoint)
 			if err != nil {
 				logger.Error("Failed to unmount: %v", err)
 			}
