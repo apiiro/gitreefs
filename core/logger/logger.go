@@ -145,6 +145,13 @@ func DebugLogger() *log.Logger {
 	return debugLogger
 }
 
+func InfoLogger() *log.Logger {
+	if globalLevel > LogLevelInfo {
+		return nil
+	}
+	return infoLogger
+}
+
 func ErrorLogger() *log.Logger {
 	if globalLevel > LogLevelError {
 		return nil

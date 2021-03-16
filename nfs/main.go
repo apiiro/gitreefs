@@ -63,7 +63,7 @@ OPTIONS:
 func (app *NfsApp) RunUntilStopped(opts common.Options) error {
 	clonesPath := opts.(*options).clonesPath
 	port := opts.(*options).port
-	cacheSize := opts.(*options).cacheSize
+	//cacheSize := opts.(*options).cacheSize
 
 	listener, err := net.Listen("tcp", ":"+port)
 	if err != nil {
@@ -78,6 +78,6 @@ func (app *NfsApp) RunUntilStopped(opts common.Options) error {
 	}
 
 	handler := nfsHelper.NewNullAuthHandler(fileSystem)
-	cacheHelper := nfsHelper.NewCachingHandler(handler, cacheSize)
-	return nfs.Serve(listener, cacheHelper)
+	binaryHandler := nfsHelper.NewBinaryHandler(handler, fileSystem)
+	return nfs.Serve(listener, binaryHandler, logger.DebugLogger(), logger.InfoLogger())
 }
