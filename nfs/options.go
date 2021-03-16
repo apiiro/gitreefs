@@ -41,7 +41,7 @@ func (app *NfsApp) ParseOptions(ctx *cli.Context) (common.Options, error) {
 	argsLen := len(args)
 	if argsLen < 1 {
 		exeName := path.Base(os.Args[0])
-		err = fmt.Errorf("%s takes one to three arguments. Run `%s --help` for more info", exeName, exeName)
+		return nil, fmt.Errorf("%s takes one to three arguments. Run `%s --help` for more info", exeName, exeName)
 	}
 
 	opts.clonesPath = args[0]

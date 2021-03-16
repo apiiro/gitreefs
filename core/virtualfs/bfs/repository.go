@@ -41,7 +41,7 @@ func (repository *Repository) getOrAddCommitish(name string) (commitish *Commiti
 				return existingValue
 			}
 			var commitish *Commitish
-			commitish, err = NewCommitish(name)
+			commitish, err = NewCommitish(name, repository.provider)
 			return commitish
 		})
 	if wrapped.(*Commitish) == nil {

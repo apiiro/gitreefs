@@ -15,3 +15,7 @@ require (
 	golang.org/x/sys v0.0.0-20210305230114-8fe3ee5dd75b // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
+
+replace (
+	github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => "../../go-nfs/"
+)

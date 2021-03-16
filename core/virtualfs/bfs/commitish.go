@@ -14,11 +14,13 @@ type Commitish struct {
 	mutex     *sync.Mutex
 }
 
-func NewCommitish(name string) (commitish *Commitish, err error) {
+func NewCommitish(name string, provider *git.RepositoryProvider) (commitish *Commitish, err error) {
 	logger.Debug("NewCommitish: %v", name)
 	return &Commitish{
 		name:      name,
+		provider:  provider,
 		rootEntry: nil,
+		mutex:     &sync.Mutex{},
 	}, err
 }
 

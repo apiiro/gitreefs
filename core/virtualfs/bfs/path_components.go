@@ -1,8 +1,8 @@
 package bfs
 
 import (
-	"fmt"
 	"path/filepath"
+	"strings"
 )
 
 type pathComponents struct {
@@ -19,11 +19,15 @@ func (components *pathComponents) hasCommitish() bool {
 	return len(components.commitishName) > 0
 }
 
-func breakdown(fullPath string) (components *pathComponents, err error) {
-	if len(fullPath) == 0 {
-		return nil, fmt.Errorf("breakdown: path is empty")
+func split(path string) []string {
+	if len(path) == 0 {
+		return []string{}
 	}
-	parts := filepath.SplitList(fullPath)
+	return strings.Split(path, string(filepath.Separator))
+}
+
+func breakdown(fullPath string) (components *pathComponents, err error) {
+	parts := split(fullPath)
 	components = &pathComponents{
 		repositoryName: "",
 		commitishName:  "",

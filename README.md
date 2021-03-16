@@ -22,7 +22,33 @@ go test -v ./...
 
 ## NFS solution
 
-//...
+```bash
+go run gitreefs/fuse --help
+go run gitreefs/fuse --log-level INFO /var/git
+# then
+mkdir -p /tmp/git
+mount -o port=2049,mountport=2049 -t nfs localhost:/ /tmp/git
+umount /tmp/git
+```
+
+```bash
+NAME:
+   gitreefs-nfs - NFS server providing access to a forest of git trees as a virtual file system
+
+USAGE:
+   gitreefs-nfs [Options] clones-path [port] [cacheSize]
+
+ARGS:
+    clones-path  path to a directory containing git clones (with .git in them)
+    port         (optional) to serve the server at, defaults to 2049
+    cacheSize    (optional) size of file handlers cache, defaults to 1024
+
+OPTIONS:
+   --log-file value   Output logs file path format. (default: "logs/gitreefs-%v-%v.log")
+   --log-level value  Set log level. (default: "DEBUG")
+   --help, -h         show help
+   --version, -v      print the version
+```
 
 ## FUSE solution
 

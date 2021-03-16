@@ -62,7 +62,7 @@ func (file *File) ReadAt(buff []byte, offset int64) (int, error) {
 	if !file.isFetched {
 		contents, err := file.commitish.FileContents(file.subPath)
 		if err != nil {
-			logger.Error("file.ReadAt: failed for %v: %v", file.fullPath, err)
+			logger.Error("file.ReadAt: failed for '%v': %v", file.fullPath, err)
 			return 0, os.ErrNotExist
 		}
 		file.contents = contents

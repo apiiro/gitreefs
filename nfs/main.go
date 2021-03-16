@@ -21,6 +21,23 @@ func main() {
 }
 
 func (app *NfsApp) DeclareCli() *cli.App {
+	cli.AppHelpTemplate =
+		`NAME:
+   {{.Name}} - {{.Usage}}
+
+USAGE:
+   {{.Name}} {{if .Flags}}[Options]{{end}} clones-path [port] [cacheSize]
+
+ARGS:
+    clones-path{{ "\t" }}path to a directory containing git clones (with .git in them)
+    port{{ "\t" }}(optional) to serve the server at, defaults to 2049
+    cacheSize{{ "\t" }}(optional) size of file handlers cache, defaults to 1024
+
+OPTIONS:
+   {{range .Flags}}{{.}}
+   {{end}}
+`
+
 	return &cli.App{
 		Name:    "gitreefs-nfs",
 		Version: Version,

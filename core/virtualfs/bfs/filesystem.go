@@ -32,7 +32,7 @@ func (fs *GitFileSystem) Capabilities() billy.Capability {
 func (fs *GitFileSystem) Open(path string) (billy.File, error) {
 	components, err := breakdown(path)
 	if err != nil {
-		logger.Error("fs.Open: could not find %v: %v", path, err)
+		logger.Error("fs.Open: could not find '%v': %v", path, err)
 		return nil, os.ErrNotExist
 	}
 
@@ -75,7 +75,7 @@ func (fs *GitFileSystem) OpenFile(filename string, _ int, _ os.FileMode) (billy.
 func (fs *GitFileSystem) Stat(path string) (os.FileInfo, error) {
 	components, err := breakdown(path)
 	if err != nil {
-		logger.Error("fs.Stat: could not find %v: %v", path, err)
+		logger.Error("fs.Stat: could not find '%v': %v", path, err)
 		return nil, os.ErrNotExist
 	}
 
@@ -127,7 +127,7 @@ func (fs *GitFileSystem) Stat(path string) (os.FileInfo, error) {
 func (fs *GitFileSystem) ReadDir(path string) ([]os.FileInfo, error) {
 	components, err := breakdown(path)
 	if err != nil {
-		logger.Error("fs.ReadDir: could not find %v: %v", path, err)
+		logger.Error("fs.ReadDir: could not find '%v': %v", path, err)
 		return nil, os.ErrNotExist
 	}
 
