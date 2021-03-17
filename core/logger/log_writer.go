@@ -25,6 +25,7 @@ func (lw *logWriter) Write(message []byte) (bytesWritten int, err error) {
 		message,
 		endOfLine,
 	))
+
 	for _, writer := range lw.writers {
 		if writer != nil {
 			_, err = writer.Write(formattedMessage)

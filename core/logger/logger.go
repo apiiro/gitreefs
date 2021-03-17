@@ -24,6 +24,7 @@ var (
 	debugLogger *log.Logger
 	infoLogger  *log.Logger
 	errorLogger *log.Logger
+	nullLogger  *log.Logger
 	fileLogger  *lumberjack.Logger
 	globalLevel LogLevel
 	appVersion  = "-"
@@ -38,6 +39,7 @@ func initLoggers() {
 	debugLogger = log.New(createLogger(LogLevelDebug), "", flag)
 	infoLogger = log.New(createLogger(LogLevelInfo), "", flag)
 	errorLogger = log.New(createLogger(LogLevelError), "", flag)
+	nullLogger = newNullLogger()
 }
 
 func InitLoggers(filePathFormat string, level string, version string) error {
@@ -140,21 +142,21 @@ func Error(format string, v ...interface{}) {
 
 func DebugLogger() *log.Logger {
 	if globalLevel > LogLevelDebug {
-		return nil
+		return nullLogger
 	}
 	return debugLogger
 }
 
 func InfoLogger() *log.Logger {
 	if globalLevel > LogLevelInfo {
-		return nil
+		return nullLogger
 	}
 	return infoLogger
 }
 
 func ErrorLogger() *log.Logger {
 	if globalLevel > LogLevelError {
-		return nil
+		return nullLogger
 	}
 	return errorLogger
 }

@@ -14,10 +14,11 @@ type nfsTestSuite struct {
 	suite.Suite
 	clonesPath string
 	mountPoint string
+	dataPath   string
 }
 
 func TestNfsTestSuite(t *testing.T) {
-	logger.InitLoggers("logs/nfs_test-%v.log", "INFO", "-")
+	logger.InitLoggers("logs/nfs_test-%v-%v.log", "INFO", "-")
 	suite.Run(t, new(nfsTestSuite))
 }
 
@@ -36,11 +37,21 @@ func execCommand(name string, arg ...string) {
 func (nfsSuite *nfsTestSuite) SetupTest() {
 
 	var err error
+
 	nfsSuite.clonesPath = testutils.SetupClones()
+
+	nfsSuite.dataPath, err = ioutil.TempDir("", "")
+	if err != nil {
+		panic(err)
+	}
+	err = os.MkdirAll(nfsSuite.dataPath, 0777)
+	if err != nil {
+		panic(err)
+	}
 
 	logger.Info("Serving")
 	go func() {
-		err = Serve(nfsSuite.clonesPath, "localhost","2049", "data")
+		err = Serve(nfsSuite.clonesPath, "localhost", "2049", "data")
 		panic(err)
 	}()
 
@@ -56,6 +67,7 @@ func (nfsSuite *nfsTestSuite) TearDownTest() {
 	os.RemoveAll(nfsSuite.clonesPath)
 	defer os.RemoveAll(nfsSuite.mountPoint)
 	execCommand("umount", nfsSuite.mountPoint)
+	os.RemoveAll(nfsSuite.dataPath)
 }
 
 func (nfsSuite *nfsTestSuite) TestWalkFileSystem() {

@@ -18,7 +18,7 @@ type gitTestSuite struct {
 }
 
 func TestGitTestSuite(t *testing.T) {
-	logger.InitLoggers("logs/git_test-%v.log", "ERROR", "-")
+	logger.InitLoggers("logs/git_test-%v-%v.log", "ERROR", "-")
 	suite.Run(t, new(gitTestSuite))
 }
 
