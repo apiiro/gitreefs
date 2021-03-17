@@ -8,8 +8,8 @@ github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7 h1:uSoVVbwJiQipAclBb
 github.com/alcortesm/tgz v0.0.0-20161220082320-9c5fe88206d7/go.mod h1:6zEj6s6u/ghQa61ZWa/C2Aw3RkjiTBOix7dkqa1VLIs=
 github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239 h1:kFOfPq6dUM1hTo4JG6LR5AXSUEsOjtdm0kw0FtQtMJA=
 github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239/go.mod h1:2FmKhYUyUczH0OGQWaF5ceTx0UBShxjsH6f8oGKYe2c=
-github.com/apiiro/go-nfs v0.0.0-20210316134924-ac7edf8cf26b h1:7K345kt9FaE/rTjeakEGN/RGtM04x9tK4Xo4BQh+HXU=
-github.com/apiiro/go-nfs v0.0.0-20210316134924-ac7edf8cf26b/go.mod h1:2JwespVHD8/BopIDcbGJU0/fZ7TIPRvGuftpZ1jrpTg=
+github.com/apiiro/go-nfs v0.0.0-20210317140244-72fc6f7c68d7 h1:DqhkKWFcwddFfHtMqtquFgQzjibzUHDc4ttXnsuOxmY=
+github.com/apiiro/go-nfs v0.0.0-20210317140244-72fc6f7c68d7/go.mod h1:2JwespVHD8/BopIDcbGJU0/fZ7TIPRvGuftpZ1jrpTg=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
