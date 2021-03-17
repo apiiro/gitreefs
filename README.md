@@ -41,7 +41,11 @@ go run gitreefs/nfs --help
 go run gitreefs/nfs --log-level INFO /var/git
 # then
 mkdir -p /tmp/git
+# for osx
 mount -o port=2049,mountport=2049 -t nfs localhost:/ /tmp/git
+# for linux
+mount -o port=2049,mountport=2049,nfsvers=3,noacl,tcp -t nfs localhost:/ /tmp/git
+# to unmount
 umount /tmp/git
 ```
 
