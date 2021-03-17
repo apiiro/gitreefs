@@ -20,7 +20,7 @@ func (app *NfsApp) DeclareCli() *cli.App {
    {{.Name}} - {{.Usage}}
 
 USAGE:
-   {{.Name}} {{if .Flags}}[Options]{{end}} clones-path storage-path [cacheSize]
+   {{.Name}} {{if .Flags}}[Options]{{end}} clones-path storage-path [port]
 
 ARGS:
     clones-path{{ "\t" }}path to a directory containing git clones (with .git in them)

@@ -14,6 +14,20 @@ Virtual file system, mapping from a directory of clones to all of their possible
 - [bfs](core/virtualfs/bfs) - Implementation of virtual git fs over [go-billy](https://github.com/go-git/go-billy).
 - [inodefs](core/virtualfs/inodefs) - Implementation of virtual git fs using inodes abstraction, as suiting `jacobsa/fuse`.
 
+```
+/disk/git/               ===>  /mnt/git/
+          | clone1/.git                 | clone1/
+                                             | commit1/
+                                                       | src/...
+                                             | commit2/
+                                                       | src/...
+                                             | commit3/
+                                                       | src/...
+          | clone2/.git
+          | clone3/.git
+          | ...
+```
+
 ## Tests
 
 ```bash
@@ -23,8 +37,8 @@ go test -v ./...
 ## NFS solution
 
 ```bash
-go run gitreefs/fuse --help
-go run gitreefs/fuse --log-level INFO /var/git
+go run gitreefs/nfs --help
+go run gitreefs/nfs --log-level INFO /var/git
 # then
 mkdir -p /tmp/git
 mount -o port=2049,mountport=2049 -t nfs localhost:/ /tmp/git
@@ -36,18 +50,52 @@ NAME:
    gitreefs-nfs - NFS server providing access to a forest of git trees as a virtual file system
 
 USAGE:
-   gitreefs-nfs [Options] clones-path [port] [cacheSize]
+   gitreefs-nfs [Options] clones-path storage-path [port]
 
 ARGS:
-    clones-path  path to a directory containing git clones (with .git in them)
-    port         (optional) to serve the server at, defaults to 2049
-    cacheSize    (optional) size of file handlers cache, defaults to 1024
+    clones-path   path to a directory containing git clones (with .git in them)
+    storage-path  path to a directory in which to keep persistent storage (file handler mapping)
+    port          (optional) to serve the server at, defaults to 2049
 
 OPTIONS:
    --log-file value   Output logs file path format. (default: "logs/gitreefs-%v-%v.log")
    --log-level value  Set log level. (default: "DEBUG")
    --help, -h         show help
    --version, -v      print the version
+```
+
+### Benchmark
+
+Currently not that good
+
+https://github.com/apiirolab/EVO-Exchange-BE-2019
+
+```
++--------------------------------------------+------------+-------------+
+|                 Operation                  | Time (sec) | Degradation |
++--------------------------------------------+------------+-------------+
+| Walk physical clone                        |      0.002 |             |
+| Walk physical clone + read all files       |       0.02 |             |
+| Walk virtual #1 iteration                  |       0.14 | x70         |
+| Walk virtual #2 iteration                  |       0.09 | x45         |
+| Walk virtual + read all files #1 iteration |       0.28 | x14         |
+| Walk virtual + read all files #2 iteration |       0.27 | x13.5       |
++--------------------------------------------+------------+-------------+
+```
+
+https://github.com/apiirolab/elasticsearch
+
+```
++--------------------------------------------+------------+-------------+
+|                 Operation                  | Time (sec) | Degradation |
++--------------------------------------------+------------+-------------+
+| Walk physical clone                        |        0.4 |             |
+| Walk physical clone + read all files       |        3.6 |             |
+| Walk virtual #1 iteration                  |       44.85 | x112       |
+| Walk virtual #2 iteration                  |       28.73 | x72        |
+| Walk virtual + read all files #1 iteration |      109.96 | x30.5      |
+| Walk virtual + read all files #2 iteration |      108.41 | x30.1      |
++--------------------------------------------+------------+-------------+
 ```
 
 ## FUSE solution
@@ -75,19 +123,6 @@ OPTIONS:
    --version, -v      print the version
 ```
 
-```
-/disk/git/                =>    /mnt/git/
-          | clone1/.git                 | clone1/
-                                             | commit1/
-                                                       | src/...
-                                             | commit2/
-                                                       | src/...
-                                             | commit3/
-                                                       | src/...
-          | clone2/.git
-          | clone3/.git
-          | ...
-```
 
 ### Open Issues
 
