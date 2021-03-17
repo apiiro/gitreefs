@@ -4,6 +4,7 @@ import (
 	"gitreefs/core/git"
 	"gitreefs/core/logger"
 	"os"
+	"sort"
 	"sync"
 )
 
@@ -61,6 +62,9 @@ func (commitish *Commitish) ListDir(subPath string) ([]os.FileInfo, error) {
 		}
 		i++
 	}
+	sort.SliceStable(children, func(i, j int) bool {
+		return children[i].Name() < children[j].Name()
+	})
 	return children, nil
 }
 

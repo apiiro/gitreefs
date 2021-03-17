@@ -18,6 +18,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
 
-replace github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => github.com/apiiro/go-nfs v0.0.0-20210316134924-ac7edf8cf26b
+//replace github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => github.com/apiiro/go-nfs v0.0.0-20210316134924-ac7edf8cf26b
 
-//replace github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => ../go-nfs
+replace github.com/willscott/go-nfs v0.0.0-20210308004034-50941b6e35e1 => ../go-nfs

@@ -11,19 +11,19 @@ import (
 	"time"
 )
 
-//const (
-//	REMOTE       = "https://github.com/apiirolab/elasticsearch.git"
-//	REPO_NAME    = "elasticsearch"
-//	COMMIT       = "b926bf0"
-//	PRINT_MEMORY = true
-//)
-
 const (
-	REMOTE       = "https://github.com/apiirolab/EVO-Exchange-BE-2019"
-	REPO_NAME    = "EVO-Exchange-BE-2019"
-	COMMIT       = "c47980a"
+	REMOTE       = "https://github.com/apiirolab/elasticsearch.git"
+	REPO_NAME    = "elasticsearch"
+	COMMIT       = "b926bf0"
 	PRINT_MEMORY = true
 )
+
+//const (
+//	REMOTE       = "https://github.com/apiirolab/EVO-Exchange-BE-2019"
+//	REPO_NAME    = "EVO-Exchange-BE-2019"
+//	COMMIT       = "c47980a"
+//	PRINT_MEMORY = true
+//)
 
 func execCommand(workingDirectory string, args []string) {
 	executablePath, err := exec.LookPath(args[0])

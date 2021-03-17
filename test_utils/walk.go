@@ -87,16 +87,19 @@ func assertWalk(
 func WalkFileSystem(
 	suite *suite.Suite,
 	mountPoint string,
+	checkTopLevelVirtualDirs bool,
 ) {
-	files, err := ioutil.ReadDir(mountPoint)
-	//suite.Nil(err)
-	//suite.Empty(files)
+	if checkTopLevelVirtualDirs {
+		files, err := ioutil.ReadDir(mountPoint)
+		suite.Nil(err)
+		suite.Empty(files)
 
-	files, err = ioutil.ReadDir(path.Join(mountPoint, "dc-heacth"))
-	//suite.Nil(err)
-	//suite.Empty(files)
+		files, err = ioutil.ReadDir(path.Join(mountPoint, "dc-heacth"))
+		suite.Nil(err)
+		suite.Empty(files)
+	}
 
-	_, err = ioutil.ReadDir(path.Join(mountPoint, "dc-heacth", "wat"))
+	_, err := ioutil.ReadDir(path.Join(mountPoint, "dc-heacth", "wat"))
 	suite.NotNil(err)
 	suite.True(os.IsNotExist(err))
 
@@ -119,9 +122,11 @@ func WalkFileSystem(
 		215, 47814,
 	)
 
-	files, err = ioutil.ReadDir(path.Join(mountPoint, "EVO-Exchange-BE-2019"))
-	suite.Nil(err)
-	suite.Empty(files)
+	if checkTopLevelVirtualDirs {
+		files, err := ioutil.ReadDir(path.Join(mountPoint, "EVO-Exchange-BE-2019"))
+		suite.Nil(err)
+		suite.Empty(files)
+	}
 
 	_, err = ioutil.ReadDir(path.Join(mountPoint, "EVO-Exchange-BE-2019", "wat"))
 	suite.NotNil(err)

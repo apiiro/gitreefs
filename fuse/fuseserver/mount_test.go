@@ -48,5 +48,5 @@ func (mntSuite *mountTestSuite) TearDownTest() {
 }
 
 func (mntSuite *mountTestSuite) TestWalkFileSystem() {
-	testutils.WalkFileSystem(&mntSuite.Suite, mntSuite.mountPoint)
+	testutils.WalkFileSystem(&mntSuite.Suite, mntSuite.mountPoint, true)
 }

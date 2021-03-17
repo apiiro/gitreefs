@@ -71,5 +71,5 @@ func (nfsSuite *nfsTestSuite) TearDownTest() {
 }
 
 func (nfsSuite *nfsTestSuite) TestWalkFileSystem() {
-	testutils.WalkFileSystem(&nfsSuite.Suite, nfsSuite.mountPoint)
+	testutils.WalkFileSystem(&nfsSuite.Suite, nfsSuite.mountPoint, false)
 }
