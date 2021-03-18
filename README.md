@@ -38,7 +38,7 @@ go test -v ./...
 
 ```bash
 go run gitreefs/nfs --help
-go run gitreefs/nfs --log-level INFO /var/git
+go run gitreefs/nfs --log-level INFO /var/git /var/git-data
 # then
 mkdir -p /tmp/git
 # for osx
