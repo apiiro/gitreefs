@@ -7,27 +7,17 @@ import (
 	"runtime"
 )
 
-func startAndWait(cmd *exec.Cmd) {
-	err := cmd.Start()
+func runCommand(cmd *exec.Cmd) {
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		logger.Error("command [%v] failed to start: %v", cmd.Args, err)
+		logger.Error("command [%v] failed to execute: %v\nS%v", cmd.Args, err, string(output))
 		panic(err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		output, outputErr := cmd.CombinedOutput()
-		outputString := string(output)
-		if outputErr != nil {
-			outputString = fmt.Sprintf("%v", outputErr)
-		}
-		logger.Error("command [%v] failed to execute: %v\nS%v", cmd.Args, outputErr, outputString)
-		panic(outputErr)
 	}
 }
 
 func ExecCommand(name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
-	startAndWait(cmd)
+	runCommand(cmd)
 }
 
 func ExecCommandWithDir(dir string, name string, arg ...string) {
@@ -40,7 +30,7 @@ func ExecCommandWithDir(dir string, name string, arg ...string) {
 		Args: append([]string{name}, arg...),
 		Dir:  dir,
 	}
-	startAndWait(cmd)
+	runCommand(cmd)
 }
 
 func NfsMount(mountPoint string) {
