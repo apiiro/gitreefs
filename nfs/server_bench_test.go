@@ -54,13 +54,13 @@ func (nfsSuite *nfsBenchmarkTestSuite) mount() (mountPoint string) {
 	}
 
 	logger.Info("Mounting at %v", mountPoint)
-	execCommand("mount", "-o", "port=2049,mountport=2049", "-t", "nfs", "localhost:/", mountPoint)
+	testutils.NfsMount(mountPoint)
 	return mountPoint
 }
 
 func (mntSuite *nfsBenchmarkTestSuite) unmount(mountPoint string) {
 	defer os.RemoveAll(mountPoint)
-	execCommand("umount", mountPoint)
+	testutils.ExecCommand("umount", mountPoint)
 	if testutils.PRINT_MEMORY {
 		runtime.GC()
 		testutils.PrintMemoryUsage()

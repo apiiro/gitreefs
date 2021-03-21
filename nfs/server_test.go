@@ -6,7 +6,6 @@ import (
 	testutils "gitreefs/test_utils"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"testing"
 )
 
@@ -20,18 +19,6 @@ type nfsTestSuite struct {
 func TestNfsTestSuite(t *testing.T) {
 	logger.InitLoggers("logs/nfs_test-%v-%v.log", "INFO", "-")
 	suite.Run(t, new(nfsTestSuite))
-}
-
-func execCommand(name string, arg ...string) {
-	cmd := exec.Command(name, arg...)
-	err := cmd.Start()
-	if err != nil {
-		panic(err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		panic(err)
-	}
 }
 
 func (nfsSuite *nfsTestSuite) SetupTest() {
@@ -59,14 +46,14 @@ func (nfsSuite *nfsTestSuite) SetupTest() {
 	if err != nil {
 		panic(err)
 	}
-	execCommand("mount", "-o", "port=2049,mountport=2049", "-t", "nfs", "localhost:/", nfsSuite.mountPoint)
+	testutils.NfsMount(nfsSuite.mountPoint)
 }
 
 func (nfsSuite *nfsTestSuite) TearDownTest() {
 	logger.Info("Unmounting")
 	os.RemoveAll(nfsSuite.clonesPath)
 	defer os.RemoveAll(nfsSuite.mountPoint)
-	execCommand("umount", nfsSuite.mountPoint)
+	testutils.ExecCommand("umount", nfsSuite.mountPoint)
 	os.RemoveAll(nfsSuite.dataPath)
 }
 

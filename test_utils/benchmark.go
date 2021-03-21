@@ -4,7 +4,6 @@ import (
 	"gitreefs/core/logger"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -25,26 +24,6 @@ const (
 //	PRINT_MEMORY = true
 //)
 
-func execCommand(workingDirectory string, args []string) {
-	executablePath, err := exec.LookPath(args[0])
-	if err != nil {
-		panic(err)
-	}
-	cmd := &exec.Cmd{
-		Path: executablePath,
-		Args: args,
-		Dir:  workingDirectory,
-	}
-	err = cmd.Start()
-	if err != nil {
-		panic(err)
-	}
-	err = cmd.Wait()
-	if err != nil {
-		panic(err)
-	}
-}
-
 func SetupClone() (clonesPath string, clonePath string) {
 	clonesPath, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -52,7 +31,7 @@ func SetupClone() (clonesPath string, clonePath string) {
 	}
 
 	logger.Info("Cloning...")
-	execCommand(clonesPath, []string{"git", "clone", REMOTE})
+	ExecCommandWithDir(clonesPath, "git", "clone", REMOTE)
 	return clonesPath, path.Join(clonesPath, REPO_NAME)
 }
 
@@ -101,7 +80,7 @@ func BenchmarkWalkVirtualFileSystem(
 	times = append(times, op{
 		description: "git checkout",
 		seconds: timed(func() {
-			execCommand(clonePath, []string{"git", "checkout", COMMIT})
+			ExecCommandWithDir(clonePath, "git", "checkout", COMMIT)
 		}),
 	})
 
@@ -129,8 +108,8 @@ func BenchmarkWalkVirtualFileSystem(
 		description: "archive and decompress",
 		seconds: timed(func() {
 			tarFilePath := path.Join(clonesPath, "archive.tar")
-			execCommand(clonePath, []string{"git", "archive", COMMIT, "--format=tar", "--output", tarFilePath})
-			execCommand(contentDirPath, []string{"tar", "-xf", tarFilePath})
+			ExecCommandWithDir(clonePath, "git", "archive", COMMIT, "--format=tar", "--output", tarFilePath)
+			ExecCommandWithDir(contentDirPath, "tar", "-xf", tarFilePath)
 		}),
 	})
 

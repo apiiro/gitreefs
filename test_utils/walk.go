@@ -6,7 +6,6 @@ import (
 	"gitreefs/core/logger"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 )
@@ -21,23 +20,13 @@ func SetupClones() string {
 		"https://github.com/apiirolab/dc-heacth.git",
 		"https://github.com/apiirolab/EVO-Exchange-BE-2019.git",
 	}
-	var gitExecutable string
-	gitExecutable, err = exec.LookPath("git")
-	if err != nil {
-		panic(err)
-	}
 	for _, remote := range remotes {
 		logger.Info("Cloning %v", remote)
-		cloneCmd := &exec.Cmd{
-			Path: gitExecutable,
-			Args: []string{"git", "clone", "--no-checkout", remote},
-			Dir:  clonesPath,
-		}
-		err = cloneCmd.Start()
-		if err != nil {
-			panic(err)
-		}
-		err = cloneCmd.Wait()
+		ExecCommandWithDir(
+			clonesPath,
+			"git",
+			"clone", "--no-checkout", remote,
+		)
 	}
 
 	return clonesPath
