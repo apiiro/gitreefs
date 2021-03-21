@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"fmt"
+	"gitreefs/core/logger"
 	"os/exec"
 	"runtime"
 )
@@ -9,11 +10,18 @@ import (
 func startAndWait(cmd *exec.Cmd) {
 	err := cmd.Start()
 	if err != nil {
+		logger.Error("command [%v] failed to start: %v", cmd.Args, err)
 		panic(err)
 	}
 	err = cmd.Wait()
 	if err != nil {
-		panic(err)
+		output, outputErr := cmd.CombinedOutput()
+		outputString := string(output)
+		if outputErr != nil {
+			outputString = fmt.Sprintf("%v", outputErr)
+		}
+		logger.Error("command [%v] failed to execute: %v\nS%v", cmd.Args, outputErr, outputString)
+		panic(outputErr)
 	}
 }
 
