@@ -133,6 +133,19 @@ OPTIONS:
 - Performance - can add caching, either in memory of physical fs based
 - Memory usage - currently nothing allocated will ever be released. Can add interval clean up to swipe away unused roots (in repository or commitish level).
 
+### Docker and Kubernetes Deployment
+
+```shell
+# build docker
+docker build -f fuse/Dockerfile -t gitreefs-fuse .
+# test docker
+docker run --rm -it --device /dev/fuse --privileged gitreefs-fuse /tmp /mnt/gitfreefs
+# push docker
+TAG=$(go run gitreefs/fuse --version | cut -d" " -f 3)
+docker tag gitreefs-fuse gcr.io/apiiro/tools/gitreefs-fuse:$TAG
+docker push gcr.io/apiiro/tools/gitreefs-fuse:$TAG
+```
+
 ### Benchmark
 
 Currently not that good

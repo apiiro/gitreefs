@@ -36,7 +36,7 @@ OPTIONS:
 		Name:    "gitreefs-nfs",
 		Version: Version,
 		Usage:   "NFS server providing access to a forest of git trees as a virtual file system",
-		Writer:  os.Stderr,
+		Writer:  os.Stdout,
 		Flags: []cli.Flag{
 
 			cli.StringFlag{

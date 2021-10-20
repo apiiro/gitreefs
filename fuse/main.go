@@ -41,7 +41,7 @@ OPTIONS:
 		Name:    "gitreefs-fuse",
 		Version: Version,
 		Usage:   "Mount a forest of git trees as a virtual file system backed by FUSE",
-		Writer:  os.Stderr,
+		Writer:  os.Stdout,
 		Flags: []cli.Flag{
 
 			cli.StringFlag{

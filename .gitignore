@@ -16,3 +16,4 @@
 **/*.DotSettings.user
 **/logs
 data
+bin
