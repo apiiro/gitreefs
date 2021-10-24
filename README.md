@@ -68,6 +68,19 @@ OPTIONS:
    --version, -v      print the version
 ```
 
+### Docker
+
+```shell
+# build docker
+docker build -f nfs/Dockerfile -t gitreefs-nfs .
+# test docker
+docker run --rm -it -p 2049:2049 gitreefs-nfs --log-level INFO /tmp /opt/gitfreefs
+# push docker
+TAG=$(go run gitreefs/nfs --version | cut -d" " -f 3)
+docker tag gitreefs-nfs gcr.io/apiiro/tools/gitreefs-nfs:$TAG
+docker push gcr.io/apiiro/tools/gitreefs-nfs:$TAG
+```
+
 ### Benchmark
 
 Currently not that good
@@ -133,7 +146,7 @@ OPTIONS:
 - Performance - can add caching, either in memory of physical fs based
 - Memory usage - currently nothing allocated will ever be released. Can add interval clean up to swipe away unused roots (in repository or commitish level).
 
-### Docker and Kubernetes Deployment
+### Docker
 
 ```shell
 # build docker
